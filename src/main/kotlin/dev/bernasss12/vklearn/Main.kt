@@ -11,12 +11,13 @@ import dev.bernasss12.vklearn.engine.IAppLogic
 import dev.bernasss12.vklearn.engine.Scene
 import dev.bernasss12.vklearn.engine.Window
 import dev.bernasss12.vklearn.engine.graphics.Render
+import dev.bernasss12.vklearn.util.EngineProperties
 import org.tinylog.kotlin.Logger
 
 class Main : IAppLogic {
 
     override fun cleanup() {
-        TODO("Not yet implemented")
+        EngineProperties.saveOnClose()
     }
 
     override fun init(window: Window, scene: Scene, render: Render) {

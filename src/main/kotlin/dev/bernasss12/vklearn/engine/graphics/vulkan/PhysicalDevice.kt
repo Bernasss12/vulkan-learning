@@ -6,37 +6,38 @@
 
 package dev.bernasss12.vklearn.engine.graphics.vulkan
 
-import dev.bernasss12.vklearn.engine.graphics.vulkan.VulkanUtils.vkAssertSuccess
+import dev.bernasss12.vklearn.util.VulkanUtils.moreThanZeroOrThrow
+import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
 import org.lwjgl.PointerBuffer
 import org.lwjgl.system.MemoryStack
+import org.lwjgl.system.NativeResource
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK10.*
 import org.tinylog.kotlin.Logger
 
 
-class PhysicalDevice(val vkPhysicalDevice: VkPhysicalDevice) {
+class PhysicalDevice(
+    val vkPhysicalDevice: VkPhysicalDevice,
+) {
 
     private val vkPhysicalDeviceProperties: VkPhysicalDeviceProperties by lazy {
         // Get device properties
-        VkPhysicalDeviceProperties.calloc().use { propertyBuffer ->
+        VkPhysicalDeviceProperties.calloc().also { propertyBuffer ->
             vkGetPhysicalDeviceProperties(vkPhysicalDevice, propertyBuffer)
-            propertyBuffer
         }
     }
 
     private val vkMemoryProperties: VkPhysicalDeviceMemoryProperties by lazy {
         // Get device memory information and properties
-        VkPhysicalDeviceMemoryProperties.calloc().use { propertyBuffer ->
+        VkPhysicalDeviceMemoryProperties.calloc().also { propertyBuffer ->
             vkGetPhysicalDeviceMemoryProperties(vkPhysicalDevice, propertyBuffer)
-            propertyBuffer
         }
     }
 
     private val vkPhysicalDeviceFeatures: VkPhysicalDeviceFeatures by lazy {
         // Get device memory information and properties
-        VkPhysicalDeviceFeatures.calloc().use { propertyBuffer ->
+        VkPhysicalDeviceFeatures.calloc().also { propertyBuffer ->
             vkGetPhysicalDeviceFeatures(vkPhysicalDevice, propertyBuffer)
-            propertyBuffer
         }
     }
 
@@ -46,10 +47,9 @@ class PhysicalDevice(val vkPhysicalDevice: VkPhysicalDevice) {
             vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, null as String?, deviceExtensionCountBuffer, null)
                 .vkAssertSuccess("Error getting device extension count")
             val deviceExtensionCount = deviceExtensionCountBuffer[0]
-            VkExtensionProperties.calloc(deviceExtensionCount).use { vkExtensionProperties ->
+            VkExtensionProperties.calloc(deviceExtensionCount).also { vkExtensionProperties ->
                 vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, null as String?, deviceExtensionCountBuffer, vkExtensionProperties)
                     .vkAssertSuccess("Error getting device extension properties")
-                vkExtensionProperties
             }
         }
     }
@@ -59,9 +59,8 @@ class PhysicalDevice(val vkPhysicalDevice: VkPhysicalDevice) {
             val queueFamilyPropertiesCountBuffer = stack.mallocInt(1)
             vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, queueFamilyPropertiesCountBuffer, null)
             val queueFamilyPropertiesCount = queueFamilyPropertiesCountBuffer[0]
-            VkQueueFamilyProperties.calloc(queueFamilyPropertiesCount).use { vkQueueFamilyProperties ->
+            VkQueueFamilyProperties.calloc(queueFamilyPropertiesCount).also { vkQueueFamilyProperties ->
                 vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, queueFamilyPropertiesCountBuffer, vkQueueFamilyProperties)
-                vkQueueFamilyProperties
             }
         }
     }
@@ -76,7 +75,7 @@ class PhysicalDevice(val vkPhysicalDevice: VkPhysicalDevice) {
                 // Get available devices
                 val pPhysicalDevices = getPhysicalDevices(instance, stack)
                 val numberPhysicalDevices = pPhysicalDevices.capacity()
-                if (numberPhysicalDevices <= 0) throw RuntimeException("No physical devices found.")
+                    .moreThanZeroOrThrow("No physical devices found")
 
                 // Gather available devices
                 val devices = (0..<numberPhysicalDevices).mapNotNull { index ->
@@ -131,11 +130,17 @@ class PhysicalDevice(val vkPhysicalDevice: VkPhysicalDevice) {
         if (Logger.isDebugEnabled()) {
             Logger.debug("Destroying physical device [$deviceName]")
         }
-        vkPhysicalDeviceFeatures.free()
-        vkMemoryProperties.free()
-        vkQueueFamilyProperties.free()
-        vkDeviceExtensionProperties.free()
-        vkPhysicalDeviceProperties.free()
+        vkPhysicalDeviceFeatures.freeInitialized()
+        vkMemoryProperties.freeInitialized()
+        vkQueueFamilyProperties.freeInitialized()
+        vkDeviceExtensionProperties.freeInitialized()
+        vkPhysicalDeviceProperties.freeInitialized()
+    }
+
+    private fun NativeResource.freeInitialized() {
+        if (this is Lazy<*> && this.isInitialized()) {
+            this.free()
+        }
     }
 
 }

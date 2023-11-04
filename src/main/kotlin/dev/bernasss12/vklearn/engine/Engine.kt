@@ -9,7 +9,10 @@ package dev.bernasss12.vklearn.engine
 import dev.bernasss12.vklearn.engine.graphics.Render
 import dev.bernasss12.vklearn.util.EngineProperties
 
-class Engine(windowTitle: String, private val appLogic: IAppLogic) {
+class Engine(
+    windowTitle: String,
+    private val appLogic: IAppLogic
+) {
 
     private val window: Window
     private val render: Render
@@ -65,6 +68,7 @@ class Engine(windowTitle: String, private val appLogic: IAppLogic) {
 
     fun stop() {
         running = false
+        EngineProperties.saveOnClose()
     }
 
 }

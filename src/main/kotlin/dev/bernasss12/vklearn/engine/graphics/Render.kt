@@ -11,13 +11,17 @@ import dev.bernasss12.vklearn.engine.Window
 import dev.bernasss12.vklearn.engine.graphics.vulkan.*
 import dev.bernasss12.vklearn.util.EngineProperties
 
-class Render(window: Window, scene: Scene) {
+class Render(
+    window: Window,
+    scene: Scene
+) {
 
     private val instance = Instance(EngineProperties.validate)
     private val physicalDevice: PhysicalDevice = PhysicalDevice.createPhysicalDevice(instance, EngineProperties.physicalDeviceName)
     private val device: Device = Device(physicalDevice)
     private val surface: Surface = Surface(physicalDevice, window.handle)
     private val graphicsQueue: Queue.GraphicsQueue = Queue.GraphicsQueue(device, 0)
+    private val swapChain: SwapChain = SwapChain(device, surface, window, EngineProperties.requestedImages, EngineProperties.vsync)
 
     fun cleanup() {
         surface.cleanup()

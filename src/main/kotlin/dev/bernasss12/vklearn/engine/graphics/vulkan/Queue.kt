@@ -11,7 +11,11 @@ import org.lwjgl.vulkan.VK10.*
 import org.lwjgl.vulkan.VkQueue
 import org.tinylog.kotlin.Logger
 
-open class Queue(device: Device, queueFamilyIndex: Int, queueIndex: Int) {
+open class Queue(
+    device: Device,
+    queueFamilyIndex: Int,
+    queueIndex: Int,
+) {
     val vkQueue: VkQueue
 
     init {

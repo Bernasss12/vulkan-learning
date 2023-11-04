@@ -4,15 +4,17 @@
  * For the purpose of not bloating every single file in the project, refer to the version of the MIT license provided in the project in `LICENCE.md`
  */
 
+@file:Suppress("MemberVisibilityCanBePrivate")
+
 package dev.bernasss12.vklearn.engine.input
 
 import org.joml.Vector2f
 import org.lwjgl.glfw.GLFW.*
 
 class MouseInput(windowHandle: Long) {
-    val currentPos: Vector2f
-    private val previousPos: Vector2f
-    val displVec: Vector2f
+    val currentPosition: Vector2f = Vector2f()
+    private val previousPosition: Vector2f = Vector2f(-1f, -1f)
+    val displacementVector: Vector2f = Vector2f()
     private var inWindow = false
     var leftButtonPressed = false
         private set
@@ -20,12 +22,8 @@ class MouseInput(windowHandle: Long) {
         private set
 
     init {
-        previousPos = Vector2f(-1f, -1f)
-        currentPos = Vector2f()
-        displVec = Vector2f()
-
         glfwSetCursorPosCallback(windowHandle) { _, x, y ->
-            currentPos.apply {
+            currentPosition.apply {
                 this.x = x.toFloat()
                 this.y = y.toFloat()
             }
@@ -42,18 +40,18 @@ class MouseInput(windowHandle: Long) {
     }
 
     fun input() {
-        displVec.zero()
-        if (previousPos.x > 0 && previousPos.y > 0 && inWindow) {
+        displacementVector.zero()
+        if (previousPosition.x > 0 && previousPosition.y > 0 && inWindow) {
             // TODO verify this is calculating correctly
-            val (deltaX, deltaY) = currentPos.copy().sub(previousPos).pair()
+            val (deltaX, deltaY) = currentPosition.copy().sub(previousPosition).pair()
             val (rotateX, rotateY) = (deltaX != 0f) to (deltaY != 0f)
             if (rotateX) {
-                displVec.y = deltaX
+                displacementVector.y = deltaX
             }
             if (rotateY) {
-                displVec.x = deltaY
+                displacementVector.x = deltaY
             }
-            previousPos.set(currentPos)
+            previousPosition.set(currentPosition)
         }
     }
 

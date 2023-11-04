@@ -13,7 +13,10 @@ import org.lwjgl.glfw.GLFWKeyCallbackI
 import org.lwjgl.glfw.GLFWVulkan.glfwVulkanSupported
 import org.lwjgl.system.MemoryUtil
 
-class Window(val title: String, keyCallback: GLFWKeyCallbackI? = null) {
+class Window(
+    private val title: String,
+    keyCallback: GLFWKeyCallbackI? = null
+) {
 
     val mouseInput: MouseInput
     val handle: Long

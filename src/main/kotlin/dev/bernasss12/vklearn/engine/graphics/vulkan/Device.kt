@@ -39,9 +39,9 @@ class Device(val physicalDevice: PhysicalDevice) {
             // Enable all queue features
             val queueFamilyProperties = physicalDevice.vkQueueFamilyProperties
             val queueFamilyCount = queueFamilyProperties.capacity()
-            val queues = VkDeviceQueueCreateInfo.calloc(queueFamilyCount, stack)
-            queues.forEachIndexed { index, queue ->
-                val priorities = stack.callocFloat(queue.queueCount())
+            val queueCreateInfoBuffer = VkDeviceQueueCreateInfo.calloc(queueFamilyCount, stack)
+            queueCreateInfoBuffer.forEachIndexed { index, queue ->
+                val priorities = stack.callocFloat(queueFamilyProperties.get(index).queueCount())
                 queue.sType(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
                     .queueFamilyIndex(index)
                     .pQueuePriorities(priorities)
@@ -52,7 +52,7 @@ class Device(val physicalDevice: PhysicalDevice) {
                 .sType(VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
                 .ppEnabledExtensionNames(extensions)
                 .pEnabledFeatures(features)
-                .pQueueCreateInfos(queues)
+                .pQueueCreateInfos(queueCreateInfoBuffer)
 
             val pointer = stack.mallocPointer(1)
             vkCreateDevice(physicalDevice.vkPhysicalDevice, deviceCreateInfo, null, pointer)

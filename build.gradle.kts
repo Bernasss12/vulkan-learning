@@ -58,5 +58,5 @@ kotlin {
 }
 
 application {
-    mainClass.set("MainKt")
+    mainClass.set("dev.bernasss12.vklearn.MainKt")
 }

@@ -7,6 +7,7 @@
 package dev.bernasss12.vklearn.engine
 
 import dev.bernasss12.vklearn.engine.graphics.Render
+import dev.bernasss12.vklearn.util.EngineProperties
 
 class Engine(windowTitle: String, private val appLogic: IAppLogic) {
 

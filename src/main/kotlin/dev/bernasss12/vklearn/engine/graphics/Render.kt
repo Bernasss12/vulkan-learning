@@ -6,10 +6,10 @@
 
 package dev.bernasss12.vklearn.engine.graphics
 
-import dev.bernasss12.vklearn.engine.EngineProperties
 import dev.bernasss12.vklearn.engine.Scene
 import dev.bernasss12.vklearn.engine.Window
 import dev.bernasss12.vklearn.engine.graphics.vulkan.*
+import dev.bernasss12.vklearn.util.EngineProperties
 
 class Render(window: Window, scene: Scene) {
 

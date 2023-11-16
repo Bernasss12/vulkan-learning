@@ -6,8 +6,8 @@
 
 package dev.bernasss12.vklearn.engine.graphics.vulkan
 
-import dev.bernasss12.vklearn.engine.graphics.vulkan.VulkanUtils.moreThanZeroOrThrow
-import dev.bernasss12.vklearn.engine.graphics.vulkan.VulkanUtils.vkAssertSuccess
+import dev.bernasss12.vklearn.util.VulkanUtils.moreThanZeroOrThrow
+import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
 import org.lwjgl.PointerBuffer
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.NativeResource

@@ -6,8 +6,9 @@
 
 package dev.bernasss12.vklearn.engine.graphics.vulkan
 
-import dev.bernasss12.vklearn.engine.graphics.vulkan.VulkanUtils.getOperatingSystem
-import dev.bernasss12.vklearn.engine.graphics.vulkan.VulkanUtils.vkAssertSuccess
+import dev.bernasss12.vklearn.util.VulkanUtils
+import dev.bernasss12.vklearn.util.VulkanUtils.getOperatingSystem
+import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
 import org.lwjgl.PointerBuffer
 import org.lwjgl.glfw.GLFWVulkan
 import org.lwjgl.system.MemoryStack

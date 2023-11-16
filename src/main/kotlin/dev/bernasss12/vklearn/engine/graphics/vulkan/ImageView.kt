@@ -6,7 +6,7 @@
 
 package dev.bernasss12.vklearn.engine.graphics.vulkan
 
-import dev.bernasss12.vklearn.engine.graphics.vulkan.VulkanUtils.vkAssertSuccess
+import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK10.*
 import org.lwjgl.vulkan.VkImageViewCreateInfo

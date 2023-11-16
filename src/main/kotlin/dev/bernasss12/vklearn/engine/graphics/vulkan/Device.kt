@@ -6,7 +6,8 @@
 
 package dev.bernasss12.vklearn.engine.graphics.vulkan
 
-import dev.bernasss12.vklearn.engine.graphics.vulkan.VulkanUtils.vkAssertSuccess
+import dev.bernasss12.vklearn.util.VulkanUtils
+import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.KHRPortabilitySubset.VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME

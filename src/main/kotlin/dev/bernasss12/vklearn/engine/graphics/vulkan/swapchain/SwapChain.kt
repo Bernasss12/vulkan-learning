@@ -11,8 +11,8 @@ import dev.bernasss12.vklearn.engine.graphics.vulkan.Device
 import dev.bernasss12.vklearn.engine.graphics.vulkan.ImageView
 import dev.bernasss12.vklearn.engine.graphics.vulkan.PhysicalDevice
 import dev.bernasss12.vklearn.engine.graphics.vulkan.Surface
-import dev.bernasss12.vklearn.engine.graphics.vulkan.VulkanUtils.moreThanZeroOrThrow
-import dev.bernasss12.vklearn.engine.graphics.vulkan.VulkanUtils.vkAssertSuccess
+import dev.bernasss12.vklearn.util.VulkanUtils.moreThanZeroOrThrow
+import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK10.*

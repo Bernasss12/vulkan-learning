@@ -4,9 +4,13 @@
  * For the purpose of not bloating every single file in the project, refer to the version of the MIT license provided in the project in `LICENCE.md`
  */
 
-package dev.bernasss12.vklearn.engine.graphics.vulkan
+package dev.bernasss12.vklearn.engine.graphics.vulkan.swapchain
 
 import dev.bernasss12.vklearn.engine.Window
+import dev.bernasss12.vklearn.engine.graphics.vulkan.Device
+import dev.bernasss12.vklearn.engine.graphics.vulkan.ImageView
+import dev.bernasss12.vklearn.engine.graphics.vulkan.PhysicalDevice
+import dev.bernasss12.vklearn.engine.graphics.vulkan.Surface
 import dev.bernasss12.vklearn.engine.graphics.vulkan.VulkanUtils.moreThanZeroOrThrow
 import dev.bernasss12.vklearn.engine.graphics.vulkan.VulkanUtils.vkAssertSuccess
 import org.lwjgl.system.MemoryStack
@@ -68,8 +72,12 @@ class SwapChain(
 
             // Create swap chain
             vkSwapChain = stack.mallocLong(1).let { longBuffer ->
-                KHRSwapchain.vkCreateSwapchainKHR(device.vkDevice, vkSwapChainCreateInfo, null, longBuffer)
-                    .vkAssertSuccess("Failed to create swap chain")
+                KHRSwapchain.vkCreateSwapchainKHR(
+                    device.vkDevice,
+                    vkSwapChainCreateInfo,
+                    null,
+                    longBuffer
+                ).vkAssertSuccess("Failed to create swap chain")
                 longBuffer[0]
             }
 
@@ -80,14 +88,22 @@ class SwapChain(
     private fun createImageViews(stack: MemoryStack, device: Device, vkSwapChain: Long, imageFormat: Int): List<ImageView> {
         // Get amount of surface images
         val swapChainImageCountBuffer = stack.mallocInt(1)
-        KHRSwapchain.vkGetSwapchainImagesKHR(device.vkDevice, vkSwapChain, swapChainImageCountBuffer, null)
-            .vkAssertSuccess("Failed to get number of surface images")
+        KHRSwapchain.vkGetSwapchainImagesKHR(
+            device.vkDevice,
+            vkSwapChain,
+            swapChainImageCountBuffer,
+            null
+        ).vkAssertSuccess("Failed to get number of surface images")
         val swapChainImageCount = swapChainImageCountBuffer.get(0)
 
         // Get surface images
         val swapChainImages = stack.mallocLong(swapChainImageCount)
-        KHRSwapchain.vkGetSwapchainImagesKHR(device.vkDevice, vkSwapChain, swapChainImageCountBuffer, swapChainImages)
-            .vkAssertSuccess("Failed to get surface images")
+        KHRSwapchain.vkGetSwapchainImagesKHR(
+            device.vkDevice,
+            vkSwapChain,
+            swapChainImageCountBuffer,
+            swapChainImages
+        ).vkAssertSuccess("Failed to get surface images")
 
         // Map to ImageView
         return (0..<swapChainImageCount).map { index ->
@@ -150,7 +166,7 @@ class SwapChain(
                 surfaceFormatBuffer,
             ).vkAssertSuccess("Failed to get surface formats")
 
-            // Find first surface format that supports the format and color space specified. If not return what the first surface format allows.
+            // Find a first surface format that supports the format and color space specified. If not return what the first surface format allows.
             return surfaceFormatBuffer.firstOrNull { surfaceFormat ->
                 surfaceFormat.format() == VK_FORMAT_B8G8R8A8_SRGB && surfaceFormat.colorSpace() == KHRSurface.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
             }?.let { surfaceFormat ->

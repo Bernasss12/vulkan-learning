@@ -61,8 +61,12 @@ class Device(
 
             // Create device from info
             val pointer = stack.mallocPointer(1)
-            vkCreateDevice(physicalDevice.vkPhysicalDevice, deviceCreateInfo, null, pointer)
-                .vkAssertSuccess("Failed to create device")
+            vkCreateDevice(
+                physicalDevice.vkPhysicalDevice,
+                deviceCreateInfo,
+                null,
+                pointer
+            ).vkAssertSuccess("Failed to create device")
             vkDevice = VkDevice(pointer[0], physicalDevice.vkPhysicalDevice, deviceCreateInfo)
         }
     }

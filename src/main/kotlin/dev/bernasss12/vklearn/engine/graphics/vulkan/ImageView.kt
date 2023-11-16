@@ -46,8 +46,12 @@ class ImageView(
 
             // Allocate long buffer and create image view from info
             val vkImageViewBuffer = stack.mallocLong(1)
-            vkCreateImageView(device.vkDevice, imageViewCreateInfo, null, vkImageViewBuffer)
-                .vkAssertSuccess("Failed to create image view")
+            vkCreateImageView(
+                device.vkDevice,
+                imageViewCreateInfo,
+                null,
+                vkImageViewBuffer
+            ).vkAssertSuccess("Failed to create image view")
             vkImageView = vkImageViewBuffer.get(0)
         }
     }

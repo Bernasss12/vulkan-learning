@@ -1,3 +1,4 @@
+<<<<<<< HEAD:src/main/kotlin/dev/bernasss12/vklearn/engine/EngineProperties.kt
 /*
  * Copyright (c) 2023 Bernardo Antunes
  *
@@ -5,6 +6,9 @@
  */
 
 package dev.bernasss12.vklearn.engine
+=======
+package dev.bernasss12.vklearn.util
+>>>>>>> 47ff65e (Add properties file and change package):src/main/kotlin/dev/bernasss12/vklearn/util/EngineProperties.kt
 
 import org.tinylog.kotlin.Logger
 import java.io.File

@@ -40,3 +40,5 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+/.idea/copyright/
+/src/main/resources/engine.properties

@@ -11,7 +11,10 @@ import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.KHRSurface
 import org.tinylog.kotlin.Logger
 
-class Surface(private val physicalDevice: PhysicalDevice, windowHandle: Long) {
+class Surface(
+    private val physicalDevice: PhysicalDevice,
+    windowHandle: Long,
+) {
 
     val vkSurface: Long
 

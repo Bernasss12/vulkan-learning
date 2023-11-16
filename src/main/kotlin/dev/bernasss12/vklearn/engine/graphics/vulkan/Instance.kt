@@ -20,7 +20,9 @@ import org.tinylog.kotlin.Logger
 import java.nio.IntBuffer
 
 
-class Instance(validate: Boolean) {
+class Instance(
+    validate: Boolean,
+) {
 
     // Main validation layer
     private val vkLayerKhronosValidation = "VK_LAYER_KHRONOS_validation"
@@ -54,14 +56,16 @@ class Instance(validate: Boolean) {
     init {
         Logger.debug("Creating Vulkan instance")
         MemoryStack.stackPush().use { stack ->
+            // Create app info
             val appShortName = stack.UTF8("VulkanBook")
-            val appInfo = VkApplicationInfo.calloc(stack)
-                .sType(VK_STRUCTURE_TYPE_APPLICATION_INFO)
-                .pApplicationName(appShortName)
-                .applicationVersion(VK_VERSION_MAJOR(1))
-                .pEngineName(appShortName)
-                .engineVersion(0)
-                .apiVersion(VK_API_VERSION_1_1)
+            val appInfo = VkApplicationInfo.calloc(stack).apply {
+                sType(VK_STRUCTURE_TYPE_APPLICATION_INFO)
+                pApplicationName(appShortName)
+                applicationVersion(VK_VERSION_MAJOR(1))
+                pEngineName(appShortName)
+                engineVersion(0)
+                apiVersion(VK_API_VERSION_1_1)
+            }
 
             // Get supported validation layers
             val validationLayers = getSupportedValidationLayers()
@@ -129,12 +133,13 @@ class Instance(validate: Boolean) {
             }
 
             //Create instance info
-            val instanceInfo = VkInstanceCreateInfo.calloc()
-                .sType(VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
-                .pNext(extension)
-                .pApplicationInfo(appInfo)
-                .ppEnabledLayerNames(requiredLayers)
-                .ppEnabledExtensionNames(requiredExtensions)
+            val instanceInfo = VkInstanceCreateInfo.calloc().apply {
+                sType(VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
+                pNext(extension)
+                pApplicationInfo(appInfo)
+                ppEnabledLayerNames(requiredLayers)
+                ppEnabledExtensionNames(requiredExtensions)
+            }
 
             if (useMacOsPortability) {
                 instanceInfo.flags(0x00000001)
@@ -197,6 +202,7 @@ class Instance(validate: Boolean) {
             val extensionPropsBuffer = VkExtensionProperties.calloc(numExtensions, stack)
             vkEnumerateInstanceExtensionProperties(null as String?, numExtensionBuffer, extensionPropsBuffer)
                 .vkAssertSuccess("Error getting extension properties")
+
             // Map property to name. Return set of all the extension names.
             return extensionPropsBuffer.map { extensionProperty ->
                 extensionProperty.extensionNameString().also { propertyName ->
@@ -214,17 +220,22 @@ class Instance(validate: Boolean) {
         MemoryStack.stackPush().use { stack ->
             // Allocate int buffer of size 1 to store the number of available layers.
             val numLayersBuffer: IntBuffer = stack.callocInt(1)
+
             // Call vkEnumerateInstanceLayerProperties with null pProperties to fill IntBuffer with amount of property layers
             vkEnumerateInstanceLayerProperties(numLayersBuffer, null)
                 .vkAssertSuccess("Error getting layer count")
+
             // Get amount of property layers from buffer
             val numLayers = numLayersBuffer[0]
             Logger.debug("Instance supports [$numLayers] layers")
+
             // Allocate buffer with retrieved amount of property layers
             val layerPropsBuff = VkLayerProperties.calloc(numLayers, stack)
+
             // Full LayerProperty buffer with Instance layers
             vkEnumerateInstanceLayerProperties(numLayersBuffer, layerPropsBuff)
                 .vkAssertSuccess("Error getting layer properties")
+
             // Get all available layer names
             val supportedLayers = layerPropsBuff.map { layerProperty ->
                 layerProperty.layerNameString().also { layerName ->
@@ -244,12 +255,11 @@ class Instance(validate: Boolean) {
     /**
      * Create new debug messenger
      */
-    private fun createDebugCallBack() = VkDebugUtilsMessengerCreateInfoEXT
-        .calloc()
-        .sType(VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT)
-        .messageSeverity(messageSeverityBitmask)
-        .messageType(messageTypeBitmask)
-        .pfnUserCallback { messageSeverity, _, pCallbackData, _ ->
+    private fun createDebugCallBack() = VkDebugUtilsMessengerCreateInfoEXT.calloc().apply {
+        sType(VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT)
+        messageSeverity(messageSeverityBitmask)
+        messageType(messageTypeBitmask)
+        pfnUserCallback { messageSeverity, _, pCallbackData, _ ->
             val callbackData = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData)
             if (messageSeverity and VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT != 0) {
                 Logger.info("VkDebugUtilsCallback, ${callbackData.pMessageString()}")
@@ -262,4 +272,5 @@ class Instance(validate: Boolean) {
             }
             return@pfnUserCallback VK_FALSE
         }
+    }
 }

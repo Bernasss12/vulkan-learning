@@ -6,6 +6,8 @@
 
 package dev.bernasss12.vklearn.engine
 
-class Scene(window: Window) {
+class Scene(
+    window: Window
+) {
 
 }

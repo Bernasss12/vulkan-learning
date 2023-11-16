@@ -13,7 +13,7 @@ object VulkanUtils {
     /**
      * Hard fails in case the given code does not match 'VK_SUCCESS'
      */
-    fun vkCheckSuccess(error: Int, errorMessage: String) {
+    private fun vkCheckSuccess(error: Int, errorMessage: String) {
         if (error != VK_SUCCESS) {
             throw RuntimeException("$errorMessage: $error")
         }
@@ -23,6 +23,13 @@ object VulkanUtils {
      * Calls vkCheckSuccess on error code.
      */
     fun Int.vkAssertSuccess(errorMessage: String = "Error occurred") = vkCheckSuccess(this, errorMessage)
+
+    fun Int.moreThanZeroOrThrow(errorMessage: String): Int {
+        if (this <= 0) {
+            throw RuntimeException(errorMessage)
+        }
+        return this
+    }
 
     fun getOperatingSystem(): OperatingSystem {
         val system = System.getProperty("os.name", "generic").lowercase()

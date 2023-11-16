@@ -6,6 +6,7 @@
 
 package dev.bernasss12.vklearn.engine.graphics.vulkan
 
+import dev.bernasss12.vklearn.engine.graphics.vulkan.VulkanUtils.moreThanZeroOrThrow
 import dev.bernasss12.vklearn.engine.graphics.vulkan.VulkanUtils.vkAssertSuccess
 import org.lwjgl.PointerBuffer
 import org.lwjgl.system.MemoryStack
@@ -15,7 +16,9 @@ import org.lwjgl.vulkan.VK10.*
 import org.tinylog.kotlin.Logger
 
 
-class PhysicalDevice(val vkPhysicalDevice: VkPhysicalDevice) {
+class PhysicalDevice(
+    val vkPhysicalDevice: VkPhysicalDevice,
+) {
 
     private val vkPhysicalDeviceProperties: VkPhysicalDeviceProperties by lazy {
         // Get device properties
@@ -72,7 +75,7 @@ class PhysicalDevice(val vkPhysicalDevice: VkPhysicalDevice) {
                 // Get available devices
                 val pPhysicalDevices = getPhysicalDevices(instance, stack)
                 val numberPhysicalDevices = pPhysicalDevices.capacity()
-                if (numberPhysicalDevices <= 0) throw RuntimeException("No physical devices found.")
+                    .moreThanZeroOrThrow("No physical devices found")
 
                 // Gather available devices
                 val devices = (0..<numberPhysicalDevices).mapNotNull { index ->
@@ -131,11 +134,11 @@ class PhysicalDevice(val vkPhysicalDevice: VkPhysicalDevice) {
         vkMemoryProperties.freeInitialized()
         vkQueueFamilyProperties.freeInitialized()
         vkDeviceExtensionProperties.freeInitialized()
-        vkPhysicalDeviceProperties.free()
+        vkPhysicalDeviceProperties.freeInitialized()
     }
 
     private fun NativeResource.freeInitialized() {
-        if(this is Lazy<*> && this.isInitialized()) {
+        if (this is Lazy<*> && this.isInitialized()) {
             this.free()
         }
     }

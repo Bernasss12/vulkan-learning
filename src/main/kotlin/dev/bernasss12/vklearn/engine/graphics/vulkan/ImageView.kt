@@ -7,6 +7,7 @@
 package dev.bernasss12.vklearn.engine.graphics.vulkan
 
 import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
+import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateLong
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK10.*
 import org.lwjgl.vulkan.VkImageViewCreateInfo
@@ -19,7 +20,7 @@ class ImageView(
 
     private val aspectMask: Int = imageViewData.aspectMask
     private val mipLevels: Int = imageViewData.mipLevels
-    private val vkImageView: Long
+    val vkImageView: Long
 
     fun cleanup() {
         vkDestroyImageView(device.vkDevice, vkImageView, null)
@@ -45,14 +46,16 @@ class ImageView(
             }
 
             // Allocate long buffer and create image view from info
-            val vkImageViewBuffer = stack.mallocLong(1)
-            vkCreateImageView(
-                device.vkDevice,
-                imageViewCreateInfo,
-                null,
-                vkImageViewBuffer
-            ).vkAssertSuccess("Failed to create image view")
-            vkImageView = vkImageViewBuffer.get(0)
+            vkImageView = stack.vkCreateLong(
+                "Failed to create image view"
+            ) { buffer ->
+                vkCreateImageView(
+                    device.vkDevice,
+                    imageViewCreateInfo,
+                    null,
+                    buffer
+                ).vkAssertSuccess("Failed to create image view")
+            }
         }
     }
 

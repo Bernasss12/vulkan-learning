@@ -6,21 +6,26 @@
 
 package dev.bernasss12.vklearn.engine.graphics.vulkan
 
+import dev.bernasss12.vklearn.util.VulkanUtils.moreThanZeroOrThrow
 import dev.bernasss12.vklearn.util.VulkanUtils.useMemoryStack
+import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
 import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateInt
 import dev.bernasss12.vklearn.util.VulkanUtils.vkCreatePointer
-import org.lwjgl.system.MemoryStack
+import org.lwjgl.PointerBuffer
 import org.lwjgl.vulkan.KHRSurface
 import org.lwjgl.vulkan.VK10.*
 import org.lwjgl.vulkan.VkQueue
+import org.lwjgl.vulkan.VkSubmitInfo
 import org.tinylog.kotlin.Logger
+import java.nio.IntBuffer
+import java.nio.LongBuffer
 
 open class Queue(
     device: Device,
     val queueFamilyIndex: Int,
     queueIndex: Int,
 ) {
-    private val vkQueue: VkQueue
+    val vkQueue: VkQueue
 
     init {
         Logger.debug("Creating queue")
@@ -37,6 +42,34 @@ open class Queue(
         vkQueueWaitIdle(vkQueue)
     }
 
+    fun submit(
+        commandBuffers: PointerBuffer,
+        waitSemaphores: LongBuffer,
+        dstStageMasks: IntBuffer,
+        signalSemaphores: LongBuffer,
+        fence: Fence
+    ) {
+        useMemoryStack { stack ->
+            val submitInfo = VkSubmitInfo.calloc(stack).apply {
+                sType(VK_STRUCTURE_TYPE_SUBMIT_INFO)
+                pCommandBuffers(commandBuffers)
+                pSignalSemaphores(signalSemaphores)
+                // If waitSemaphores becomes nullable only do this if not-null
+                waitSemaphoreCount(waitSemaphores.capacity())
+                pWaitSemaphores(waitSemaphores)
+                pWaitDstStageMask(dstStageMasks)
+                // And do this if null
+                // waitSemaphoreCount(0)
+            }
+
+            vkQueueSubmit(
+                vkQueue,
+                submitInfo,
+                fence.vkFence, // If vkFence is nullable and null pass VK_NULL_HANDLE
+            ).vkAssertSuccess("Failed to submit command queue")
+        }
+    }
+
     class GraphicsQueue(
         device: Device,
         queueIndex: Int
@@ -49,11 +82,7 @@ open class Queue(
             private fun getGraphicsQueueFamilyIndex(device: Device): Int {
                 return device.physicalDevice.vkQueueFamilyProperties.indexOfFirst { queueFamilyProperty ->
                     queueFamilyProperty.queueFlags() and VK_QUEUE_GRAPHICS_BIT != 0
-                }.also { index ->
-                    if (index < 0) {
-                        throw RuntimeException("Failed to get Graphics Queue family index")
-                    }
-                }
+                }.moreThanZeroOrThrow("Failed to get Graphics Queue family index")
             }
         }
     }
@@ -64,11 +93,11 @@ open class Queue(
         queueIndex: Int,
     ): Queue(
         device,
-        getPresentQueuFamilyIndex(device, surface),
+        getPresentQueueFamilyIndex(device, surface),
         queueIndex,
     ) {
         companion object {
-            private fun getPresentQueuFamilyIndex(device: Device, surface: Surface): Int {
+            private fun getPresentQueueFamilyIndex(device: Device, surface: Surface): Int {
                 useMemoryStack { stack ->
                     return device.physicalDevice.vkQueueFamilyProperties.withIndex().indexOfFirst { indexedVkQueueFamilyProperty ->
                         stack.vkCreateInt { buffer ->
@@ -79,11 +108,7 @@ open class Queue(
                                 buffer,
                             )
                         } == VK_TRUE
-                    }.also { index ->
-                        if (index < 0) {
-                            throw RuntimeException("Failed to get Presentation Queue family index")
-                        }
-                    }
+                    }.moreThanZeroOrThrow("Failed to get Presentation Queue family index")
                 }
             }
         }

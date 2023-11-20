@@ -39,11 +39,21 @@ class RenderPass(
                 .colorAttachmentCount(colorReference.remaining())
                 .pColorAttachments(colorReference)
 
+            val subpassDependencies = VkSubpassDependency.calloc(1, stack)
+            subpassDependencies.get(0).apply {
+                srcSubpass(VK_SUBPASS_EXTERNAL)
+                dstSubpass(0)
+                srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+                dstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+                srcAccessMask(0)
+                dstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+            }
+
             val renderPassCreateInfo = VkRenderPassCreateInfo.calloc(stack).apply {
                 sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO)
                 pAttachments(attachments)
                 pSubpasses(subPass)
-                // TODO pDependencies(subpassDependencies)
+                pDependencies(subpassDependencies)
             }
 
             val vkRenderPassBuffer = stack.mallocLong(1)

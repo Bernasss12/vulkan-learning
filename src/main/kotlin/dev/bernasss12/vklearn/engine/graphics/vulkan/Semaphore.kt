@@ -7,7 +7,7 @@
 package dev.bernasss12.vklearn.engine.graphics.vulkan
 
 import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
-import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateInt
+import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateLong
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK10.*
 import org.lwjgl.vulkan.VkSemaphoreCreateInfo
@@ -24,7 +24,7 @@ class Semaphore(
             }
 
             //TODO check if this works
-            vkSemaphore = stack.vkCreateInt { buffer ->
+            vkSemaphore = stack.vkCreateLong { buffer ->
                 vkCreateSemaphore(
                     device.vkDevice,
                     semaphoreCreateInfoBuffer,

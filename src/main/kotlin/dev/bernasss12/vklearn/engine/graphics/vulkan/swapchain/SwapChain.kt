@@ -7,13 +7,14 @@
 package dev.bernasss12.vklearn.engine.graphics.vulkan.swapchain
 
 import dev.bernasss12.vklearn.engine.Window
-import dev.bernasss12.vklearn.engine.graphics.vulkan.Device
-import dev.bernasss12.vklearn.engine.graphics.vulkan.ImageView
-import dev.bernasss12.vklearn.engine.graphics.vulkan.PhysicalDevice
-import dev.bernasss12.vklearn.engine.graphics.vulkan.Surface
+import dev.bernasss12.vklearn.engine.graphics.vulkan.*
 import dev.bernasss12.vklearn.util.VulkanUtils.moreThanZeroOrThrow
+import dev.bernasss12.vklearn.util.VulkanUtils.useMemoryStack
 import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
+import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateInt
+import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateLong
 import org.lwjgl.system.MemoryStack
+import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK10.*
 import org.tinylog.kotlin.Logger
@@ -24,15 +25,19 @@ class SwapChain(
     val window: Window,
     requestedImages: Int,
     vsync: Boolean,
+    presentQueue: Queue.PresentQueue,
+    concurrentQueues: List<Queue>,
 ) {
     val imageViews: List<ImageView>
     val surfaceFormat: SurfaceFormat = calculateSurfaceFormat(device.physicalDevice, surface)
     val swapChainExtent: VkExtent2D
-    val vkSwapChain: Long
+    private val vkSwapChain: Long
+    val syncSemaphores: List<SyncSemaphores>
+    var currentFrame: Int
 
     init {
         Logger.debug("Creating Vulkan SwapChain")
-        MemoryStack.stackPush().use { stack ->
+        useMemoryStack { stack ->
             val physicalDevice = device.physicalDevice
 
             // Get surface capabilities
@@ -57,7 +62,6 @@ class SwapChain(
                 imageExtent(swapChainExtent)
                 imageArrayLayers(1)
                 imageUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-                imageSharingMode(VK_SHARING_MODE_EXCLUSIVE)
                 preTransform(surfaceCapabilities.currentTransform())
                 compositeAlpha(KHRSurface.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
                 clipped(true)
@@ -68,25 +72,103 @@ class SwapChain(
                         KHRSurface.VK_PRESENT_MODE_IMMEDIATE_KHR
                     }
                 )
+
+                concurrentQueues.map { queue ->
+                    queue.queueFamilyIndex
+                }.filterNot { index ->
+                    index == presentQueue.queueFamilyIndex
+                }.also { indices ->
+                    if (indices.isNotEmpty()) {
+                        val indicesBuffer = stack.mallocInt(indices.size + 1).apply {
+                            indices.forEach { put(it) }
+                            put(presentQueue.queueFamilyIndex)
+                            flip()
+                        }
+                        imageSharingMode(VK_SHARING_MODE_CONCURRENT)
+                        queueFamilyIndexCount(indicesBuffer.capacity())
+                        pQueueFamilyIndices(indicesBuffer)
+                    } else {
+                        imageSharingMode(VK_SHARING_MODE_EXCLUSIVE)
+                    }
+                }
             }
 
             // Create swap chain
-            vkSwapChain = stack.mallocLong(1).let { longBuffer ->
+            vkSwapChain = stack.vkCreateLong("Failed to create swap chain") { buffer ->
                 KHRSwapchain.vkCreateSwapchainKHR(
                     device.vkDevice,
                     vkSwapChainCreateInfo,
                     null,
-                    longBuffer
-                ).vkAssertSuccess("Failed to create swap chain")
-                longBuffer[0]
+                    buffer
+                )
             }
+
+            // Setting up semaphores
+            syncSemaphores = List(imageCount) { _ -> SyncSemaphores(device) }
+            currentFrame = 0
 
             imageViews = createImageViews(stack, device, vkSwapChain, surfaceFormat.imageFormat)
         }
     }
 
+    fun presentImage(queue: Queue): Boolean {
+        useMemoryStack { stack ->
+            val present = VkPresentInfoKHR.calloc(stack).apply {
+                sType(KHRSwapchain.VK_STRUCTURE_TYPE_PRESENT_INFO_KHR)
+                pWaitSemaphores(
+                    stack.longs(
+                        syncSemaphores[currentFrame].renderCompleteSemaphore.vkSemaphore
+                    )
+                )
+                swapchainCount(1)
+                pSwapchains(stack.longs(vkSwapChain))
+                pImageIndices(stack.ints(currentFrame))
+            }
+            return KHRSwapchain.vkQueuePresentKHR(queue.vkQueue, present).let { result ->
+                when (result) {
+                    KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR -> true
+                    KHRSwapchain.VK_SUBOPTIMAL_KHR, VK_SUCCESS -> false
+                    else -> throw RuntimeException("Failed to acquire image: $result")
+                }
+            }.also {
+                currentFrame = (currentFrame + 1) % imageViews.size
+            }
+        }
+    }
+
+    fun acquireNextImage(): Boolean {
+        useMemoryStack {  stack ->
+            currentFrame = stack.vkCreateInt { buffer ->
+                KHRSwapchain.vkAcquireNextImageKHR(
+                    device.vkDevice,
+                    vkSwapChain,
+                    0L,
+                    syncSemaphores[currentFrame].imageAcquisitionSemaphore.vkSemaphore,
+                    MemoryUtil.NULL,
+                    buffer,
+                ).also { result ->
+                    return when (result) {
+                        KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR -> true
+                        KHRSwapchain.VK_SUBOPTIMAL_KHR, VK_SUCCESS -> false
+                        else -> throw RuntimeException("Failed to acquire image: $result")
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+    fun cleanup() {
+        Logger.debug("Destroying Vulkan SwapChain")
+        swapChainExtent.free()
+        imageViews.forEach(ImageView::cleanup)
+        syncSemaphores.forEach(SyncSemaphores::cleanup)
+        KHRSwapchain.vkDestroySwapchainKHR(device.vkDevice, vkSwapChain, null)
+    }
+
     private fun createImageViews(stack: MemoryStack, device: Device, vkSwapChain: Long, imageFormat: Int): List<ImageView> {
-        // Get amount of surface images
+        // Get number of surface images
+        // Not using vkCreateInt because the IntBuffer is necessary at a later point.
         val swapChainImageCountBuffer = stack.mallocInt(1)
         KHRSwapchain.vkGetSwapchainImagesKHR(
             device.vkDevice,
@@ -120,24 +202,24 @@ class SwapChain(
 
     private fun calculateSwapChainExtent(window: Window, surfaceCapabilities: VkSurfaceCapabilitiesKHR): VkExtent2D {
         // Check if surface size is already defined
-        return VkExtent2D.calloc().also { result ->
+        return VkExtent2D.calloc().apply {
             if (surfaceCapabilities.currentExtent().width() == 0xFFFFFFFF.toInt()) {
                 // Surface size is undefined. Set to window size if possible.
-                result.width(
+                width(
                     window.width.coerceIn(
                         surfaceCapabilities.minImageExtent().width(),
                         surfaceCapabilities.maxImageExtent().width()
                     )
                 )
-                result.height(
+                height(
                     window.height.coerceIn(
                         surfaceCapabilities.minImageExtent().height(),
                         surfaceCapabilities.maxImageExtent().height()
                     )
                 )
             } else {
-                // Surface size is already defined so just go with that.
-                result.set(
+                // Surface size is already defined, so go with that.
+                set(
                     surfaceCapabilities.currentExtent()
                 )
             }
@@ -185,12 +267,19 @@ class SwapChain(
             }
     }
 
-    fun cleanup() {
-        Logger.debug("Destroying Vulkan SwapChain")
-        swapChainExtent.free()
-        imageViews.forEach(ImageView::cleanup)
-        KHRSwapchain.vkDestroySwapchainKHR(device.vkDevice, vkSwapChain, null)
-    }
+    data class SurfaceFormat(
+        val imageFormat: Int,
+        val colorSpace: Int
+    )
 
-    data class SurfaceFormat(val imageFormat: Int, val colorSpace: Int)
+    data class SyncSemaphores(
+        val imageAcquisitionSemaphore: Semaphore, val renderCompleteSemaphore: Semaphore
+    ) {
+        constructor(device: Device) : this(Semaphore(device), Semaphore(device))
+
+        fun cleanup() {
+            imageAcquisitionSemaphore.cleanup()
+            renderCompleteSemaphore.cleanup()
+        }
+    }
 }

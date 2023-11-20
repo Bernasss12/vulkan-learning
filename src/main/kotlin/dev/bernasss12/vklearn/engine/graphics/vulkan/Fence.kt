@@ -7,7 +7,7 @@
 package dev.bernasss12.vklearn.engine.graphics.vulkan
 
 import dev.bernasss12.vklearn.util.VulkanUtils.useMemoryStack
-import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateLongErrorChecking
+import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateLong
 import org.lwjgl.vulkan.VK10.*
 import org.lwjgl.vulkan.VkFenceCreateInfo
 
@@ -30,7 +30,7 @@ class Fence(
                 flags(flags)
             }
 
-            vkFence = stack.vkCreateLongErrorChecking(
+            vkFence = stack.vkCreateLong(
                 "Failed to create fence"
             ) { buffer ->
                 vkCreateFence(

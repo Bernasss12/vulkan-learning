@@ -54,7 +54,7 @@ open class Queue(
                 sType(VK_STRUCTURE_TYPE_SUBMIT_INFO)
                 pCommandBuffers(commandBuffers)
                 pSignalSemaphores(signalSemaphores)
-                // If waitSemaphores becomes nullable only do this if not-null
+                // If waitSemaphores becomes nullable, only do this if not-null
                 waitSemaphoreCount(waitSemaphores.capacity())
                 pWaitSemaphores(waitSemaphores)
                 pWaitDstStageMask(dstStageMasks)

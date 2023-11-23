@@ -8,6 +8,4 @@ package dev.bernasss12.vklearn.engine
 
 class Scene(
     window: Window
-) {
-
-}
+)

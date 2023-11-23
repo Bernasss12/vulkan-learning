@@ -6,8 +6,8 @@
 
 package dev.bernasss12.vklearn.engine.graphics.vulkan
 
-import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
-import org.lwjgl.system.MemoryStack
+import dev.bernasss12.vklearn.util.VulkanUtils.useMemoryStack
+import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateLong
 import org.lwjgl.vulkan.VK10.*
 import org.lwjgl.vulkan.VkFramebufferCreateInfo
 import java.nio.LongBuffer
@@ -16,7 +16,7 @@ class FrameBuffer(private val device: Device, width: Int, height: Int, pAttachme
     val vkFrameBuffer: Long
 
     init {
-        MemoryStack.stackPush().use { stack ->
+        useMemoryStack { stack ->
             val frameBufferCreateInfo = VkFramebufferCreateInfo.calloc(stack).apply {
                 sType(VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO)
                 pAttachments(pAttachments)
@@ -26,15 +26,14 @@ class FrameBuffer(private val device: Device, width: Int, height: Int, pAttachme
                 renderPass(renderPass)
             }
 
-            val vkFramebufferBuffer = stack.mallocLong(1)
-            vkCreateFramebuffer(
-                device.vkDevice,
-                frameBufferCreateInfo,
-                null,
-                vkFramebufferBuffer
-            ).vkAssertSuccess("Failed to create FrameBuffer")
-
-            vkFrameBuffer = vkFramebufferBuffer.get(0)
+            vkFrameBuffer = stack.vkCreateLong("Failed to create FrameBuffer") { buffer ->
+                vkCreateFramebuffer(
+                    device.vkDevice,
+                    frameBufferCreateInfo,
+                    null,
+                    buffer
+                )
+            }
         }
     }
 

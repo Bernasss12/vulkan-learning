@@ -6,9 +6,9 @@
 
 package dev.bernasss12.vklearn.engine.graphics.vulkan
 
+import dev.bernasss12.vklearn.util.VulkanUtils.useMemoryStack
 import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
 import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateLong
-import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK10.*
 import org.lwjgl.vulkan.VkImageViewCreateInfo
 
@@ -27,7 +27,7 @@ class ImageView(
     }
 
     init {
-        MemoryStack.stackPush().use { stack ->
+        useMemoryStack { stack ->
             // Allocate and define the info structure
             val imageViewCreateInfo = VkImageViewCreateInfo.calloc(stack).apply {
                 sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)

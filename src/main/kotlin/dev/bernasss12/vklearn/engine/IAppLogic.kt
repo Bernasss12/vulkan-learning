@@ -11,8 +11,8 @@ import dev.bernasss12.vklearn.engine.graphics.Render
 interface IAppLogic {
 
     /**
-     * Invoked when application is finished.
-     * Releases resources.
+     * Invoked when the application is finished.
+     * Release resources.
      */
     fun cleanup()
 

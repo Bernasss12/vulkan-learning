@@ -6,8 +6,10 @@
 
 package dev.bernasss12.vklearn.engine.graphics.vulkan.command
 
+import dev.bernasss12.vklearn.util.VulkanUtils.notNullOrThrow
+import dev.bernasss12.vklearn.util.VulkanUtils.useMemoryStack
 import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
-import org.lwjgl.system.MemoryStack
+import dev.bernasss12.vklearn.util.VulkanUtils.vkCreatePointer
 import org.lwjgl.vulkan.VK10.*
 import org.lwjgl.vulkan.VkCommandBuffer
 import org.lwjgl.vulkan.VkCommandBufferAllocateInfo
@@ -25,7 +27,7 @@ class CommandBuffer(
 
     init {
         Logger.trace("Creating command buffer")
-        MemoryStack.stackPush().use { stack ->
+        useMemoryStack { stack ->
             val commandBufferAllocateInfo = VkCommandBufferAllocateInfo.calloc(stack).apply {
                 sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
                 commandPool(commandPool.vkCommandPool)
@@ -39,15 +41,18 @@ class CommandBuffer(
                 commandBufferCount(1)
             }
 
-            val vkCommandBufferBuffer = stack.mallocPointer(1)
-            vkAllocateCommandBuffers(
-                commandPool.device.vkDevice,
-                commandBufferAllocateInfo,
-                vkCommandBufferBuffer
-            ).vkAssertSuccess("Failed to allocate render command buffer")
+            val vkCommandBufferPointer = stack.vkCreatePointer(
+                "Failed to allocate render command buffer"
+            ) { buffer ->
+                vkAllocateCommandBuffers(
+                    commandPool.device.vkDevice,
+                    commandBufferAllocateInfo,
+                    buffer
+                )
+            }
 
             vkCommandBuffer = VkCommandBuffer(
-                vkCommandBufferBuffer.get(0),
+                vkCommandBufferPointer,
                 commandPool.device.vkDevice
             )
         }
@@ -57,8 +62,8 @@ class CommandBuffer(
         beginRecording(null)
     }
 
-    fun beginRecording(inheritanceInfo: InheritanceInfo?) {
-        MemoryStack.stackPush().use { stack ->
+    private fun beginRecording(inheritanceInfo: InheritanceInfo?) {
+        useMemoryStack { stack ->
             val commandBufferInfo = VkCommandBufferBeginInfo.calloc(stack).apply {
                 sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
                 if (oneTimeSubmit) {
@@ -74,7 +79,7 @@ class CommandBuffer(
                         }
                         pInheritanceInfo(vkCommandBufferInheritanceInfo)
                         flags(VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT)
-                    } ?: throw RuntimeException("Secondary buffers must declare inheritance info")
+                    }.notNullOrThrow("Secondary buffers must declare inheritance info")
                 }
             }
             vkBeginCommandBuffer(

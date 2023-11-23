@@ -12,6 +12,7 @@ import dev.bernasss12.vklearn.util.VulkanUtils.moreThanZeroOrThrow
 import dev.bernasss12.vklearn.util.VulkanUtils.useMemoryStack
 import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
 import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateInt
+import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateIntWithBuffer
 import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateLong
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
@@ -169,14 +170,19 @@ class SwapChain(
     private fun createImageViews(stack: MemoryStack, device: Device, vkSwapChain: Long, imageFormat: Int): List<ImageView> {
         // Get number of surface images
         // Not using vkCreateInt because the IntBuffer is necessary at a later point.
-        val swapChainImageCountBuffer = stack.mallocInt(1)
-        KHRSwapchain.vkGetSwapchainImagesKHR(
-            device.vkDevice,
-            vkSwapChain,
-            swapChainImageCountBuffer,
-            null
-        ).vkAssertSuccess("Failed to get number of surface images")
-        val swapChainImageCount = swapChainImageCountBuffer.get(0)
+        val (
+            swapChainImageCount,
+            swapChainImageCountBuffer
+        ) = stack.vkCreateIntWithBuffer(
+            "Failed to get number of surface images"
+        ) { buffer ->
+            KHRSwapchain.vkGetSwapchainImagesKHR(
+                device.vkDevice,
+                vkSwapChain,
+                buffer,
+                null
+            )
+        }
 
         // Get surface images
         val swapChainImages = stack.mallocLong(swapChainImageCount)
@@ -227,17 +233,18 @@ class SwapChain(
     }
 
     private fun calculateSurfaceFormat(physicalDevice: PhysicalDevice, surface: Surface): SurfaceFormat {
-        MemoryStack.stackPush().use { stack ->
+        useMemoryStack { stack ->
             // Get surface format count
-            val surfaceFormatCountBuffer = stack.mallocInt(1)
-            KHRSurface.vkGetPhysicalDeviceSurfaceFormatsKHR(
-                physicalDevice.vkPhysicalDevice,
-                surface.vkSurface,
-                surfaceFormatCountBuffer,
-                null,
-            ).vkAssertSuccess("Failed to get surface format count")
-            val surfaceFormatCount = surfaceFormatCountBuffer.get(0)
-                .moreThanZeroOrThrow("No surface formats retrieved")
+            val (surfaceFormatCount, surfaceFormatCountBuffer) = stack.vkCreateIntWithBuffer("Failed to get surface format count") { buffer ->
+                KHRSurface.vkGetPhysicalDeviceSurfaceFormatsKHR(
+                    physicalDevice.vkPhysicalDevice,
+                    surface.vkSurface,
+                    buffer,
+                    null,
+                )
+            }
+
+            surfaceFormatCount.moreThanZeroOrThrow("No surface formats retrieved")
 
             // Get surface formats
             val surfaceFormatBuffer = VkSurfaceFormatKHR.calloc(surfaceFormatCount, stack)
@@ -248,7 +255,7 @@ class SwapChain(
                 surfaceFormatBuffer,
             ).vkAssertSuccess("Failed to get surface formats")
 
-            // Find a first surface format that supports the format and color space specified. If not return what the first surface format allows.
+            // Find a first surface format that supports the format and color space specified. If not, return what the first surface format allows.
             return surfaceFormatBuffer.firstOrNull { surfaceFormat ->
                 surfaceFormat.format() == VK_FORMAT_B8G8R8A8_SRGB && surfaceFormat.colorSpace() == KHRSurface.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
             }?.let { surfaceFormat ->

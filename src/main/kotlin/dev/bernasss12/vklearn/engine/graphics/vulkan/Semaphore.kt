@@ -6,9 +6,9 @@
 
 package dev.bernasss12.vklearn.engine.graphics.vulkan
 
+import dev.bernasss12.vklearn.util.VulkanUtils.useMemoryStack
 import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
 import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateLong
-import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK10.*
 import org.lwjgl.vulkan.VkSemaphoreCreateInfo
 
@@ -18,7 +18,7 @@ class Semaphore(
     val vkSemaphore: Long
 
     init {
-        MemoryStack.stackPush().use { stack ->
+        useMemoryStack { stack ->
             val semaphoreCreateInfoBuffer = VkSemaphoreCreateInfo.calloc(stack).apply {
                 sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO)
             }

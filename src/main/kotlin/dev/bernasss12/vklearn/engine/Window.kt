@@ -7,6 +7,7 @@
 package dev.bernasss12.vklearn.engine
 
 import dev.bernasss12.vklearn.engine.input.MouseInput
+import dev.bernasss12.vklearn.util.VulkanUtils.notNullOrThrow
 import org.lwjgl.glfw.Callbacks.glfwFreeCallbacks
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWKeyCallbackI
@@ -14,11 +15,11 @@ import org.lwjgl.glfw.GLFWVulkan.glfwVulkanSupported
 import org.lwjgl.system.MemoryUtil
 
 class Window(
-    private val title: String,
+    title: String,
     keyCallback: GLFWKeyCallbackI? = null
 ) {
 
-    val mouseInput: MouseInput
+    private val mouseInput: MouseInput
     val handle: Long
     var height: Int
     var width: Int
@@ -45,9 +46,7 @@ class Window(
 
         // Create the window
         handle = glfwCreateWindow(width, height, title, MemoryUtil.NULL, MemoryUtil.NULL)
-        if (handle == MemoryUtil.NULL) {
-            throw RuntimeException("Failed to create the GLFW window")
-        }
+            .notNullOrThrow("Failed to create the GLFW window")
 
         glfwSetFramebufferSizeCallback(handle) { _, w, h ->
             resize(w, h)

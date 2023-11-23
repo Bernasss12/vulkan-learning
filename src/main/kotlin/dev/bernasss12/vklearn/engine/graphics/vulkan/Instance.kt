@@ -6,19 +6,18 @@
 
 package dev.bernasss12.vklearn.engine.graphics.vulkan
 
-import dev.bernasss12.vklearn.util.VulkanUtils
-import dev.bernasss12.vklearn.util.VulkanUtils.getOperatingSystem
+import dev.bernasss12.vklearn.util.OperatingSystem
+import dev.bernasss12.vklearn.util.VulkanUtils.useMemoryStack
 import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
+import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateIntWithBuffer
 import org.lwjgl.PointerBuffer
 import org.lwjgl.glfw.GLFWVulkan
-import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.EXTDebugUtils.*
 import org.lwjgl.vulkan.VK10.*
 import org.lwjgl.vulkan.VK11.VK_API_VERSION_1_1
 import org.tinylog.kotlin.Logger
-import java.nio.IntBuffer
 
 
 class Instance(
@@ -56,7 +55,7 @@ class Instance(
 
     init {
         Logger.debug("Creating Vulkan instance")
-        MemoryStack.stackPush().use { stack ->
+        useMemoryStack { stack ->
             // Create app info
             val appShortName = stack.UTF8("VulkanBook")
             val appInfo = VkApplicationInfo.calloc(stack).apply {
@@ -71,15 +70,15 @@ class Instance(
             // Get supported validation layers
             val validationLayers = getSupportedValidationLayers()
             val validationLayersCount = validationLayers.size
-            var supportsValidation = validate
+            var supportValidation = validate
             if (validate && validationLayersCount == 0) {
-                supportsValidation = false
+                supportValidation = false
                 Logger.warn("Request validation but no supported validation layers found. Falling back to no validation.")
             }
-            Logger.debug("Validation: $supportsValidation")
+            Logger.debug("Validation: $supportValidation")
 
             // Put validation layers in allocated memory
-            val requiredLayers = if (supportsValidation) {
+            val requiredLayers = if (supportValidation) {
                 stack.mallocPointer(validationLayersCount).also { requiredLayers ->
                     validationLayers.forEachIndexed { index, layer ->
                         Logger.debug("Using validation layer [{}]", layer)
@@ -101,19 +100,19 @@ class Instance(
             } as PointerBuffer
 
             // Check for mac portability extension
-            val useMacOsPortability = instanceExtensions.contains(portabilityExtension) && getOperatingSystem() == VulkanUtils.OperatingSystem.MACOS
+            val useMacOsPortability = instanceExtensions.contains(portabilityExtension) && OperatingSystem.isMacOs
 
             // Find how many pointers are needed in buffer, starting with all the glfw required extensions
             var extensionsCount = glfwExtensions.remaining()
-            // If validation is supported one more space is needed for vkDebugUtilsExtension
-            if (supportsValidation) extensionsCount++
+            // If validation is supported, one more space is needed for vkDebugUtilsExtension
+            if (supportValidation) extensionsCount++
             if (useMacOsPortability) extensionsCount++
 
             // Create a buffer with the required extensions based on previously defined values
             val requiredExtensions = stack.mallocPointer(extensionsCount).apply {
                 put(glfwExtensions)
-                if (supportsValidation) {
-                    // Add debugging extension in case validation is supported
+                if (supportValidation) {
+                    // Add a debugging extension in case validation is supported
                     put(stack.UTF8(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
                     if (useMacOsPortability) {
                         put(stack.UTF8(portabilityExtension))
@@ -124,8 +123,8 @@ class Instance(
                 flip()
             }
 
-            // Define extension based on debugUtils and if validation is supported
-            val extension: Long = if (supportsValidation) {
+            // Define an extension based on debugUtils and if validation is supported
+            val extension: Long = if (supportValidation) {
                 debugUtils = createDebugCallBack()
                 debugUtils.address()
             } else {
@@ -156,7 +155,7 @@ class Instance(
             vkInstance = VkInstance(pInstance.get(0), instanceInfo)
 
             // Create debug utils and define handle
-            vkDebugHandle = if (supportsValidation && debugUtils != null) {
+            vkDebugHandle = if (supportValidation && debugUtils != null) {
                 stack.mallocLong(1).let { longBuffer ->
                     vkCreateDebugUtilsMessengerEXT(vkInstance, debugUtils, null, longBuffer)
                         .vkAssertSuccess("Error creating debug utils")
@@ -190,15 +189,13 @@ class Instance(
      * @return set of extension names.
      */
     private fun getInstanceExtensions(): Set<String> {
-        MemoryStack.stackPush().use { stack ->
-            // Allocate int buffer of size 1 to store number of available extensions.
-            val numExtensionBuffer = stack.callocInt(1)
-            // Call vkEnumerateInstanceExtensionProperties with null pLayerName and pProperties to fill buffer with extension count.
-            vkEnumerateInstanceExtensionProperties(null as String?, numExtensionBuffer, null)
-                .vkAssertSuccess("Error getting extension count")
-            // Get amount value from buffer
-            val numExtensions = numExtensionBuffer.get(0)
+        useMemoryStack { stack ->
+            // Allocate int buffer of size 1 to store the number of available extensions.
+            val (numExtensions, numExtensionBuffer) = stack.vkCreateIntWithBuffer("Error getting extension count") { buffer ->
+                vkEnumerateInstanceExtensionProperties(null as String?, buffer, null)
+            }
             Logger.debug("Instance supports [$numExtensions] extensions")
+
             // Allocate extension property buffer
             val extensionPropsBuffer = VkExtensionProperties.calloc(numExtensions, stack)
             vkEnumerateInstanceExtensionProperties(null as String?, numExtensionBuffer, extensionPropsBuffer)
@@ -218,19 +215,14 @@ class Instance(
      * @return list of selected validation layers.
      */
     private fun getSupportedValidationLayers(): List<String> {
-        MemoryStack.stackPush().use { stack ->
+        useMemoryStack { stack ->
             // Allocate int buffer of size 1 to store the number of available layers.
-            val numLayersBuffer: IntBuffer = stack.callocInt(1)
-
-            // Call vkEnumerateInstanceLayerProperties with null pProperties to fill IntBuffer with amount of property layers
-            vkEnumerateInstanceLayerProperties(numLayersBuffer, null)
-                .vkAssertSuccess("Error getting layer count")
-
-            // Get amount of property layers from buffer
-            val numLayers = numLayersBuffer[0]
+            val (numLayers, numLayersBuffer) = stack.vkCreateIntWithBuffer("Error getting layer count") { buffer ->
+                vkEnumerateInstanceLayerProperties(buffer, null)
+            }
             Logger.debug("Instance supports [$numLayers] layers")
 
-            // Allocate buffer with retrieved amount of property layers
+            // Allocate buffer with retrieved number of property layers
             val layerPropsBuff = VkLayerProperties.calloc(numLayers, stack)
 
             // Full LayerProperty buffer with Instance layers

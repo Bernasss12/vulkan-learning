@@ -6,8 +6,9 @@
 
 package dev.bernasss12.vklearn.engine.graphics.vulkan.swapchain
 
-import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
-import org.lwjgl.system.MemoryStack
+import dev.bernasss12.vklearn.util.VulkanUtils.applyInFirst
+import dev.bernasss12.vklearn.util.VulkanUtils.useMemoryStack
+import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateLong
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK10.*
 
@@ -17,11 +18,8 @@ class RenderPass(
     val vkRenderPass: Long
 
     init {
-        MemoryStack.stackPush().use { stack ->
-            val attachments = VkAttachmentDescription.calloc(1, stack)
-
-            // Color attachment
-            attachments.get(0).apply {
+        useMemoryStack { stack ->
+            val attachments = VkAttachmentDescription.calloc(1, stack).applyInFirst {
                 format(swapChain.surfaceFormat.imageFormat)
                 samples(VK_SAMPLE_COUNT_1_BIT)
                 loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
@@ -30,17 +28,19 @@ class RenderPass(
                 finalLayout(KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
             }
 
-            val colorReference = VkAttachmentReference.calloc(1, stack)
-                .attachment(0)
-                .layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+            val colorReference = VkAttachmentReference.calloc(1, stack).applyInFirst {
+                attachment(0)
+                layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+            }
 
-            val subPass = VkSubpassDescription.calloc(1, stack)
-                .pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS)
-                .colorAttachmentCount(colorReference.remaining())
-                .pColorAttachments(colorReference)
+            val subPass = VkSubpassDescription.calloc(1, stack).applyInFirst {
+                pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS)
+                colorAttachmentCount(colorReference.remaining())
+                pColorAttachments(colorReference)
+            }
 
-            val subpassDependencies = VkSubpassDependency.calloc(1, stack)
-            subpassDependencies.get(0).apply {
+
+            val subpassDependencies = VkSubpassDependency.calloc(1, stack).applyInFirst {
                 srcSubpass(VK_SUBPASS_EXTERNAL)
                 dstSubpass(0)
                 srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
@@ -56,14 +56,16 @@ class RenderPass(
                 pDependencies(subpassDependencies)
             }
 
-            val vkRenderPassBuffer = stack.mallocLong(1)
-            vkCreateRenderPass(
-                swapChain.device.vkDevice,
-                renderPassCreateInfo,
-                null,
-                vkRenderPassBuffer
-            ).vkAssertSuccess("Failed to create render pass")
-            vkRenderPass = vkRenderPassBuffer.get(0)
+            vkRenderPass = stack.vkCreateLong(
+                "Failed to create render pass"
+            ) { buffer ->
+                vkCreateRenderPass(
+                    swapChain.device.vkDevice,
+                    renderPassCreateInfo,
+                    null,
+                    buffer
+                )
+            }
         }
     }
 

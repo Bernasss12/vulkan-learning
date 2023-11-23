@@ -7,8 +7,8 @@
 package dev.bernasss12.vklearn.engine.graphics.vulkan.command
 
 import dev.bernasss12.vklearn.engine.graphics.vulkan.Device
-import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
-import org.lwjgl.system.MemoryStack
+import dev.bernasss12.vklearn.util.VulkanUtils.useMemoryStack
+import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateLong
 import org.lwjgl.vulkan.VK10.*
 import org.lwjgl.vulkan.VkCommandPoolCreateInfo
 import org.tinylog.kotlin.Logger
@@ -20,22 +20,23 @@ class CommandPool(
 
     init {
         Logger.debug("Creating Vulkan CommandPool")
-        MemoryStack.stackPush().use { stack ->
+        useMemoryStack { stack ->
             val commandPoolCreateInfo = VkCommandPoolCreateInfo.calloc(stack).apply {
                 sType(VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO)
                 flags(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT)
                 queueFamilyIndex(queueFamilyIndex)
             }
 
-            val vkCommandPoolBuffer = stack.mallocLong(1)
-            vkCreateCommandPool(
-                device.vkDevice,
-                commandPoolCreateInfo,
-                null,
-                vkCommandPoolBuffer
-            ).vkAssertSuccess("Failed to create command pool")
-
-            vkCommandPool = vkCommandPoolBuffer.get(0)
+            vkCommandPool = stack.vkCreateLong(
+                "Failed to create command pool"
+            ) { buffer ->
+                vkCreateCommandPool(
+                    device.vkDevice,
+                    commandPoolCreateInfo,
+                    null,
+                    buffer
+                )
+            }
         }
     }
 

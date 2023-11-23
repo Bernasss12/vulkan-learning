@@ -6,8 +6,10 @@
 
 package dev.bernasss12.vklearn.engine.graphics.vulkan
 
-import dev.bernasss12.vklearn.util.VulkanUtils
-import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
+import dev.bernasss12.vklearn.util.OperatingSystem
+import dev.bernasss12.vklearn.util.VulkanUtils.useMemoryStack
+import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateIntWithBuffer
+import dev.bernasss12.vklearn.util.VulkanUtils.vkCreatePointer
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.KHRPortabilitySubset.VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME
@@ -22,19 +24,21 @@ class Device(
 
     init {
         Logger.debug("Creating device")
-
-        MemoryStack.stackPush().use { stack ->
+        useMemoryStack { stack ->
             // Define required extensions
-            val deviceExtensions = getDeviceExtensions()
-            val usePortability = deviceExtensions.contains(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME) &&
-                    VulkanUtils.getOperatingSystem() == VulkanUtils.OperatingSystem.MACOS
-            val extensionCount = if (usePortability) 2 else 1
-            val extensions = stack.mallocPointer(extensionCount)
-            extensions.put(stack.ASCII(KHRSwapchain.VK_KHR_SWAPCHAIN_EXTENSION_NAME))
-            if (usePortability) {
-                extensions.put(stack.ASCII(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME))
+            val deviceExtensions = getDeviceExtensions(stack)
+            val usePortability = deviceExtensions.contains(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME) && OperatingSystem.isMacOs
+
+            val extensions = stack.mallocPointer(
+                if (usePortability) 2 else 1
+            ).apply {
+                put(stack.ASCII(KHRSwapchain.VK_KHR_SWAPCHAIN_EXTENSION_NAME))
+                if (usePortability) {
+                    put(stack.ASCII(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME))
+                }
+                flip()
             }
-            extensions.flip()
+
 
             // Set up required features
             val features = VkPhysicalDeviceFeatures.calloc(stack)
@@ -60,36 +64,47 @@ class Device(
                 pQueueCreateInfos(queueCreateInfoBuffer)
             }
 
-            // Create device from info
-            val pointer = stack.mallocPointer(1)
-            vkCreateDevice(
-                physicalDevice.vkPhysicalDevice,
-                deviceCreateInfo,
-                null,
-                pointer
-            ).vkAssertSuccess("Failed to create device")
-            vkDevice = VkDevice(pointer[0], physicalDevice.vkPhysicalDevice, deviceCreateInfo)
+            // Create a device from info
+            val pointer = stack.vkCreatePointer("Failed to create device") { buffer ->
+                vkCreateDevice(
+                    physicalDevice.vkPhysicalDevice,
+                    deviceCreateInfo,
+                    null,
+                    buffer
+                )
+            }
+            vkDevice = VkDevice(pointer, physicalDevice.vkPhysicalDevice, deviceCreateInfo)
         }
     }
 
-    private fun getDeviceExtensions(): Set<String> {
-        MemoryStack.stackPush().use { stack ->
-            // Get device extensions count
-            val extensionCountBuffer = stack.mallocInt(1)
-            vkEnumerateDeviceExtensionProperties(physicalDevice.vkPhysicalDevice, null as String?, extensionCountBuffer, null)
-            val extensionCount = extensionCountBuffer[0]
-            Logger.debug("Device supports [$extensionCount] extension")
+    private fun getDeviceExtensions(stack: MemoryStack): Set<String> {
+        // Get device extensions count
+        val (extensionCount, extensionCountBuffer) = stack.vkCreateIntWithBuffer { buffer ->
+            vkEnumerateDeviceExtensionProperties(
+                physicalDevice.vkPhysicalDevice,
+                null as String?,
+                buffer,
+                null
+            )
+        }
+        Logger.debug("Device supports [$extensionCount] extension")
 
-            // Get actual device extensions
-            val propertiesBuffer = VkExtensionProperties.calloc(extensionCount, stack)
-            vkEnumerateDeviceExtensionProperties(physicalDevice.vkPhysicalDevice, null as String?, extensionCountBuffer, propertiesBuffer)
-            return propertiesBuffer.map { extensionProperty ->
+        // Get actual device extensions
+        return VkExtensionProperties.calloc(extensionCount, stack).let { propertyBuffer ->
+            vkEnumerateDeviceExtensionProperties(
+                physicalDevice.vkPhysicalDevice,
+                null as String?,
+                extensionCountBuffer,
+                propertyBuffer
+            )
+            propertyBuffer.map { extensionProperty ->
                 val extensionName = extensionProperty.extensionNameString()
                 Logger.debug("Supported device extension [$extensionName]")
                 extensionName
             }.toSet()
         }
     }
+
 
     fun cleanup() {
         Logger.debug("Destroying Vulkan device")

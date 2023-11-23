@@ -7,7 +7,9 @@
 package dev.bernasss12.vklearn.engine.graphics.vulkan
 
 import dev.bernasss12.vklearn.util.VulkanUtils.moreThanZeroOrThrow
+import dev.bernasss12.vklearn.util.VulkanUtils.useMemoryStack
 import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
+import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateIntWithBuffer
 import org.lwjgl.PointerBuffer
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.NativeResource
@@ -42,11 +44,10 @@ class PhysicalDevice(
     }
 
     private val vkDeviceExtensionProperties: VkExtensionProperties.Buffer by lazy {
-        MemoryStack.stackPush().use { stack ->
-            val deviceExtensionCountBuffer = stack.mallocInt(1)
-            vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, null as String?, deviceExtensionCountBuffer, null)
-                .vkAssertSuccess("Error getting device extension count")
-            val deviceExtensionCount = deviceExtensionCountBuffer[0]
+        useMemoryStack { stack ->
+            val (deviceExtensionCount, deviceExtensionCountBuffer) = stack.vkCreateIntWithBuffer("Error getting device extension count") { buffer ->
+                vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, null as String?, buffer, null)
+            }
             VkExtensionProperties.calloc(deviceExtensionCount).also { vkExtensionProperties ->
                 vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, null as String?, deviceExtensionCountBuffer, vkExtensionProperties)
                     .vkAssertSuccess("Error getting device extension properties")
@@ -55,10 +56,10 @@ class PhysicalDevice(
     }
 
     val vkQueueFamilyProperties: VkQueueFamilyProperties.Buffer by lazy {
-        MemoryStack.stackPush().use { stack ->
-            val queueFamilyPropertiesCountBuffer = stack.mallocInt(1)
-            vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, queueFamilyPropertiesCountBuffer, null)
-            val queueFamilyPropertiesCount = queueFamilyPropertiesCountBuffer[0]
+        useMemoryStack { stack ->
+            val (queueFamilyPropertiesCount, queueFamilyPropertiesCountBuffer) = stack.vkCreateIntWithBuffer { buffer ->
+                vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, buffer, null)
+            }
             VkQueueFamilyProperties.calloc(queueFamilyPropertiesCount).also { vkQueueFamilyProperties ->
                 vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, queueFamilyPropertiesCountBuffer, vkQueueFamilyProperties)
             }
@@ -71,7 +72,7 @@ class PhysicalDevice(
     companion object {
         fun createPhysicalDevice(instance: Instance, preferredDeviceName: String?): PhysicalDevice {
             Logger.debug("Selecting physical devices")
-            MemoryStack.stackPush().use { stack ->
+            useMemoryStack { stack ->
                 // Get available devices
                 val pPhysicalDevices = getPhysicalDevices(instance, stack)
                 val numberPhysicalDevices = pPhysicalDevices.capacity()
@@ -92,7 +93,7 @@ class PhysicalDevice(
                     }
                 }
 
-                // Get selected device, if no preferred device default to first in list.
+                // Get selected device if no preferred device defaults to first in the list.
                 val selectedPhysicalDevice = preferredDeviceName?.let { preferredDeviceName ->
                     devices.find { it.deviceName == preferredDeviceName }
                 } ?: devices.firstOrNull() ?: throw RuntimeException("No suitable physical devices found")
@@ -107,10 +108,9 @@ class PhysicalDevice(
 
         private fun getPhysicalDevices(instance: Instance, stack: MemoryStack): PointerBuffer {
             // Get number of devices
-            val deviceCountBuffer = stack.mallocInt(1)
-            vkEnumeratePhysicalDevices(instance.vkInstance, deviceCountBuffer, null)
-                .vkAssertSuccess("Failed to get physical device count")
-            val deviceCount = deviceCountBuffer.get(0)
+            val (deviceCount, deviceCountBuffer) = stack.vkCreateIntWithBuffer("Failed to get physical device count") { buffer ->
+                vkEnumeratePhysicalDevices(instance.vkInstance, buffer, null)
+            }
             Logger.debug("Detected $deviceCount physical device(s)")
             // Allocate physical device property buffer
             val physicalDevicesBuffer = stack.mallocPointer(deviceCount)

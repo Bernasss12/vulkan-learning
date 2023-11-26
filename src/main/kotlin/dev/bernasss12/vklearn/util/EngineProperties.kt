@@ -22,6 +22,7 @@ object EngineProperties {
     private const val DEFAULT_VALIDATE = true
     private const val DEFAULT_REQUESTED_IMAGES = 3
     private const val DEFAULT_VSYNC = true
+    private const val DEFAULT_SHADER_RECOMPILATION = false
 
     // Updates per second
     val ups: Int
@@ -29,8 +30,28 @@ object EngineProperties {
     val physicalDeviceName: String
     val requestedImages: Int
     val vsync: Boolean
+    val shaderRecompilation: Boolean
 
     init {
+        load()
+
+        val loadedProperties = props.size
+
+        ups = props.getPropertyOrDefault("updates_per_second", DEFAULT_UPS, String::toInt)
+        validate = props.getPropertyOrDefault("vulkan_validate", DEFAULT_VALIDATE, String::toBoolean)
+        physicalDeviceName = props.getPropertyOrDefault("physical_device_name", "") { it }
+        requestedImages = props.getPropertyOrDefault("requested_images", DEFAULT_REQUESTED_IMAGES, String::toInt)
+        vsync = props.getPropertyOrDefault("vsync", DEFAULT_VSYNC, String::toBoolean)
+        shaderRecompilation = props.getPropertyOrDefault("shader_recompilation", DEFAULT_SHADER_RECOMPILATION, String::toBoolean)
+
+        // If new properties have been added override the file with the new properties, so they can be externally changed.
+        // This is good in case the program crashes before gracefully shutting down.
+        if (loadedProperties < props.size) {
+            save()
+        }
+    }
+
+    private fun load() {
         props.apply {
             try {
                 File(FILENAME)
@@ -46,15 +67,9 @@ object EngineProperties {
                 Logger.warn("File [$FILENAME] not found. Using defaults.")
             }
         }
-
-        ups = props.getPropertyOrDefault("updates_per_second", DEFAULT_UPS, String::toInt)
-        validate = props.getPropertyOrDefault("vulkan_validate", DEFAULT_VALIDATE, String::toBoolean)
-        physicalDeviceName = props.getPropertyOrDefault("physical_device_name", "") { it }
-        requestedImages = props.getPropertyOrDefault("requested_images", DEFAULT_REQUESTED_IMAGES, String::toInt)
-        vsync = props.getPropertyOrDefault("vsync", DEFAULT_VSYNC, String::toBoolean)
     }
 
-    fun saveOnClose() {
+    fun save() {
         props.apply {
             try {
                 File(FILENAME)

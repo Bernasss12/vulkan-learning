@@ -34,8 +34,8 @@ class ImageView(
                 image(vkImage)
                 viewType(imageViewData.viewType)
                 format(imageViewData.format)
-                subresourceRange {
-                    it.apply {
+                subresourceRange { subresourceRange ->
+                    subresourceRange.apply {
                         aspectMask(aspectMask)
                         baseMipLevel(0)
                         levelCount(mipLevels)

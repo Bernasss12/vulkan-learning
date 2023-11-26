@@ -44,9 +44,9 @@ open class Queue(
 
     fun submit(
         commandBuffers: PointerBuffer,
-        waitSemaphores: LongBuffer,
-        dstStageMasks: IntBuffer,
-        signalSemaphores: LongBuffer,
+        waitSemaphores: LongBuffer?,
+        dstStageMasks: IntBuffer?,
+        signalSemaphores: LongBuffer?,
         fence: Fence
     ) {
         useMemoryStack { stack ->
@@ -54,12 +54,11 @@ open class Queue(
                 sType(VK_STRUCTURE_TYPE_SUBMIT_INFO)
                 pCommandBuffers(commandBuffers)
                 pSignalSemaphores(signalSemaphores)
-                // If waitSemaphores becomes nullable, only do this if not-null
-                waitSemaphoreCount(waitSemaphores.capacity())
-                pWaitSemaphores(waitSemaphores)
-                pWaitDstStageMask(dstStageMasks)
-                // And do this if null
-                // waitSemaphoreCount(0)
+                waitSemaphores?.let {
+                    waitSemaphoreCount(waitSemaphores.capacity())
+                    pWaitSemaphores(waitSemaphores)
+                    pWaitDstStageMask(dstStageMasks)
+                } ?: waitSemaphoreCount(0)
             }
 
             vkQueueSubmit(

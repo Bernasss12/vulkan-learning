@@ -6,9 +6,11 @@
 
 package dev.bernasss12.vklearn.util
 
+import dev.bernasss12.vklearn.engine.graphics.vulkan.PhysicalDevice
 import org.lwjgl.PointerBuffer
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
+import org.lwjgl.vulkan.VK10.VK_MAX_MEMORY_TYPES
 import org.lwjgl.vulkan.VK10.VK_SUCCESS
 import java.nio.IntBuffer
 import java.nio.LongBuffer
@@ -131,7 +133,7 @@ object VulkanUtils {
      * Allows to create a buffer, grab the first element and apply something on it, and return the original buffer itself.
      */
     @OptIn(ExperimentalContracts::class)
-    inline fun <P, T : Iterable<P>> T.applyInFirst(block: P.() -> Unit): T {
+    inline fun <P, T : Iterable<P>> T.applyOnFirst(block: P.() -> Unit): T {
         contract {
             callsInPlace(block, InvocationKind.EXACTLY_ONCE)
         }
@@ -141,7 +143,34 @@ object VulkanUtils {
         return this
     }
 
-    /**
+    @OptIn(ExperimentalContracts::class)
+    inline fun <P, T : Iterable<P>> T.applyOnEach(block: P.() -> Unit): T {
+        contract {
+            callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+        }
+        forEach { it.block() }
+        return this
+    }
+
+    @OptIn(ExperimentalContracts::class)
+    inline fun <P, T : Iterable<P>, V> T.applyOnEachWith(with: Iterable<V>, block: P.(V) -> Unit): T {
+        contract {
+            callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+        }
+        zip(with).forEach { (currentThis, currentWith) -> currentThis.block(currentWith) }
+        return this
+    }
+
+    @OptIn(ExperimentalContracts::class)
+    inline fun <P, T : Iterable<P>> T.applyOnEachIndexed(block: P.(Int) -> Unit): T {
+        contract {
+            callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+        }
+        withIndex().forEach { block.invoke(it.value, it.index) }
+        return this
+    }
+
+     /**
      * Pushes the memory stack and passes it to the runnable block.
      */
     @OptIn(ExperimentalContracts::class)
@@ -152,5 +181,13 @@ object VulkanUtils {
         return MemoryStack.stackPush().use { stack ->
             runnable(stack)
         }
+    }
+
+    fun memoryTypeFromProperties(physicalDevice: PhysicalDevice, memoryTypeBits: Int, requirementMask: Int): Int {
+        return (0..VK_MAX_MEMORY_TYPES).zip(physicalDevice.vkMemoryProperties.memoryTypes()).firstOrNull { (index, memoryType) ->
+            (((memoryTypeBits shr index) and 1) == 1 && (memoryType.propertyFlags() and requirementMask) == requirementMask)
+        }
+            ?.first
+            ?: throw RuntimeException("Failed to find memory type")
     }
 }

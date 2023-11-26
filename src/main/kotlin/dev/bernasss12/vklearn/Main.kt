@@ -11,17 +11,38 @@ import dev.bernasss12.vklearn.engine.IAppLogic
 import dev.bernasss12.vklearn.engine.Scene
 import dev.bernasss12.vklearn.engine.Window
 import dev.bernasss12.vklearn.engine.graphics.Render
+import dev.bernasss12.vklearn.engine.graphics.vulkan.model.MeshData
+import dev.bernasss12.vklearn.engine.graphics.vulkan.model.ModelData
 import dev.bernasss12.vklearn.util.EngineProperties
 import org.tinylog.kotlin.Logger
+
 
 class Main : IAppLogic {
 
     override fun cleanup() {
-        EngineProperties.saveOnClose()
+        EngineProperties.save()
     }
 
     override fun init(window: Window, scene: Scene, render: Render) {
-        TODO("Not yet implemented")
+        val modelId = "TriangleModel"
+        val meshDataList = listOf(
+            MeshData(
+                floatArrayOf(
+                    -0.5f, -0.5f, 0.0f,
+                    0.0f, 0.5f, 0.0f,
+                    0.5f, -0.5f, 0.0f
+                ),
+                intArrayOf(0, 1, 2)
+            )
+        )
+
+        val modelDataList = listOf(
+            ModelData(
+                modelId,
+                meshDataList
+            )
+        )
+        render.loadModels(modelDataList)
     }
 
     override fun input(window: Window, scene: Scene, delta: Long) {

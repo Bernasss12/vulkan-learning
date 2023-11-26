@@ -29,7 +29,7 @@ class PhysicalDevice(
         }
     }
 
-    private val vkMemoryProperties: VkPhysicalDeviceMemoryProperties by lazy {
+    val vkMemoryProperties: VkPhysicalDeviceMemoryProperties by lazy {
         // Get device memory information and properties
         VkPhysicalDeviceMemoryProperties.calloc().also { propertyBuffer ->
             vkGetPhysicalDeviceMemoryProperties(vkPhysicalDevice, propertyBuffer)

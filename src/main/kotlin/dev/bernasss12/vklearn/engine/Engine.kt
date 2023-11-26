@@ -23,6 +23,7 @@ class Engine(
         this.window = Window(windowTitle)
         this.scene = Scene(window)
         this.render = Render(window, scene)
+        appLogic.init(window, scene, render)
     }
 
     private fun cleanup() {
@@ -68,7 +69,7 @@ class Engine(
 
     fun stop() {
         running = false
-        EngineProperties.saveOnClose()
+        EngineProperties.save()
     }
 
 }

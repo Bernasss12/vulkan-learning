@@ -7,6 +7,7 @@
 package dev.bernasss12.vklearn.engine.graphics.vulkan
 
 import dev.bernasss12.vklearn.util.OperatingSystem
+import dev.bernasss12.vklearn.util.VulkanUtils.applyOnEachIndexed
 import dev.bernasss12.vklearn.util.VulkanUtils.useMemoryStack
 import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateIntWithBuffer
 import dev.bernasss12.vklearn.util.VulkanUtils.vkCreatePointer
@@ -46,14 +47,11 @@ class Device(
             // Enable all queue features
             val queueFamilyProperties = physicalDevice.vkQueueFamilyProperties
             val queueFamilyCount = queueFamilyProperties.capacity()
-            val queueCreateInfoBuffer = VkDeviceQueueCreateInfo.calloc(queueFamilyCount, stack)
-            queueCreateInfoBuffer.forEachIndexed { index, queue ->
+            val queueCreateInfoBuffer = VkDeviceQueueCreateInfo.calloc(queueFamilyCount, stack).applyOnEachIndexed { index ->
                 val priorities = stack.callocFloat(queueFamilyProperties.get(index).queueCount())
-                queue.apply {
-                    sType(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
-                    queueFamilyIndex(index)
-                    pQueuePriorities(priorities)
-                }
+                sType(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
+                queueFamilyIndex(index)
+                pQueuePriorities(priorities)
             }
 
             // Create device info

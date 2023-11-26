@@ -6,7 +6,7 @@
 
 package dev.bernasss12.vklearn.engine.graphics.vulkan.swapchain
 
-import dev.bernasss12.vklearn.util.VulkanUtils.applyInFirst
+import dev.bernasss12.vklearn.util.VulkanUtils.applyOnFirst
 import dev.bernasss12.vklearn.util.VulkanUtils.useMemoryStack
 import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateLong
 import org.lwjgl.vulkan.*
@@ -19,7 +19,7 @@ class RenderPass(
 
     init {
         useMemoryStack { stack ->
-            val attachments = VkAttachmentDescription.calloc(1, stack).applyInFirst {
+            val attachments = VkAttachmentDescription.calloc(1, stack).applyOnFirst {
                 format(swapChain.surfaceFormat.imageFormat)
                 samples(VK_SAMPLE_COUNT_1_BIT)
                 loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR)
@@ -28,19 +28,19 @@ class RenderPass(
                 finalLayout(KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
             }
 
-            val colorReference = VkAttachmentReference.calloc(1, stack).applyInFirst {
+            val colorReference = VkAttachmentReference.calloc(1, stack).applyOnFirst {
                 attachment(0)
                 layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
             }
 
-            val subPass = VkSubpassDescription.calloc(1, stack).applyInFirst {
+            val subPass = VkSubpassDescription.calloc(1, stack).applyOnFirst {
                 pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS)
                 colorAttachmentCount(colorReference.remaining())
                 pColorAttachments(colorReference)
             }
 
 
-            val subpassDependencies = VkSubpassDependency.calloc(1, stack).applyInFirst {
+            val subpassDependencies = VkSubpassDependency.calloc(1, stack).applyOnFirst {
                 srcSubpass(VK_SUBPASS_EXTERNAL)
                 dstSubpass(0)
                 srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)

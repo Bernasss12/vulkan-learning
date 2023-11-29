@@ -22,12 +22,8 @@ import kotlin.apply as standardApply
 
 class VulkanModel private constructor(
     val modelId: String
-) {
+) : AutoCloseable {
     val vulkanMeshList = mutableListOf<VulkanMesh>()
-
-    fun cleanup() {
-        vulkanMeshList.forEach(VulkanMesh::cleanup)
-    }
 
     companion object {
         fun transformModels(
@@ -82,10 +78,10 @@ class VulkanModel private constructor(
             }
 
             fence.fenceWait()
-            fence.cleanup()
-            commandBuffer.cleanup()
+            fence.close()
+            commandBuffer.close()
 
-            stagingBufferList.forEach(VulkanBuffer::cleanup)
+            stagingBufferList.forEach(VulkanBuffer::close)
 
             return vulkanModelList
         }
@@ -165,5 +161,10 @@ class VulkanModel private constructor(
                 )
             }
         }
+
+    }
+
+    override fun close() {
+        vulkanMeshList.forEach(VulkanMesh::close)
     }
 }

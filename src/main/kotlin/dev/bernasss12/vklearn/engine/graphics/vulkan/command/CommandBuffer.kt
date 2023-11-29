@@ -21,7 +21,7 @@ class CommandBuffer(
     private val commandPool: CommandPool,
     private var primary: Boolean,
     private val oneTimeSubmit: Boolean,
-) {
+) : AutoCloseable {
 
     val vkCommandBuffer: VkCommandBuffer
 
@@ -89,15 +89,6 @@ class CommandBuffer(
         }
     }
 
-    fun cleanup() {
-        Logger.trace("Destroying command buffer")
-        vkFreeCommandBuffers(
-            commandPool.device.vkDevice,
-            commandPool.vkCommandPool,
-            vkCommandBuffer
-        )
-    }
-
     fun endRecording() {
         vkEndCommandBuffer(
             vkCommandBuffer
@@ -108,10 +99,12 @@ class CommandBuffer(
         vkResetCommandBuffer(vkCommandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT)
     }
 
-    data class InheritanceInfo(
-        var vkRenderPass: Long,
-        var vkFrameBuffer: Long,
-        var subPass: Int,
-    )
-
+    override fun close() {
+        Logger.trace("Destroying command buffer")
+        vkFreeCommandBuffers(
+            commandPool.device.vkDevice,
+            commandPool.vkCommandPool,
+            vkCommandBuffer
+        )
+    }
 }

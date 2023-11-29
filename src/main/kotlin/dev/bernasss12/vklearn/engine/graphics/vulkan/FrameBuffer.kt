@@ -12,7 +12,13 @@ import org.lwjgl.vulkan.VK10.*
 import org.lwjgl.vulkan.VkFramebufferCreateInfo
 import java.nio.LongBuffer
 
-class FrameBuffer(private val device: Device, width: Int, height: Int, pAttachments: LongBuffer, renderPass: Long) {
+class FrameBuffer(
+    private val device: Device,
+    width: Int,
+    height: Int,
+    pAttachments: LongBuffer,
+    renderPass: Long
+) : AutoCloseable {
     val vkFrameBuffer: Long
 
     init {
@@ -37,7 +43,7 @@ class FrameBuffer(private val device: Device, width: Int, height: Int, pAttachme
         }
     }
 
-    fun cleanup() {
+    override fun close() {
         vkDestroyFramebuffer(device.vkDevice, vkFrameBuffer, null)
     }
 }

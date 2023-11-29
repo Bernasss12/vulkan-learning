@@ -22,7 +22,7 @@ import org.tinylog.kotlin.Logger
 
 class Instance(
     validate: Boolean,
-) {
+) : AutoCloseable {
 
     // Main validation layer
     private val vkLayerKhronosValidation = "VK_LAYER_KHRONOS_validation"
@@ -167,23 +167,6 @@ class Instance(
         }
     }
 
-    fun cleanup() {
-        Logger.debug("Destroying Vulkan instance")
-
-        // Destroy utils messenger if available
-        if (vkDebugHandle != VK_NULL_HANDLE) {
-            vkDestroyDebugUtilsMessengerEXT(vkInstance, vkDebugHandle, null)
-        }
-
-        // Destroy user callback
-        debugUtils?.also {
-            debugUtils.pfnUserCallback().free()
-            debugUtils.free()
-        }
-
-        vkDestroyInstance(vkInstance, null)
-    }
-
     /**
      * Gets available instance extensions.
      * @return set of extension names.
@@ -265,5 +248,22 @@ class Instance(
             }
             return@pfnUserCallback VK_FALSE
         }
+    }
+
+    override fun close() {
+        Logger.debug("Destroying Vulkan instance")
+
+        // Destroy utils messenger if available
+        if (vkDebugHandle != VK_NULL_HANDLE) {
+            vkDestroyDebugUtilsMessengerEXT(vkInstance, vkDebugHandle, null)
+        }
+
+        // Destroy user callback
+        debugUtils?.also {
+            debugUtils.pfnUserCallback().free()
+            debugUtils.free()
+        }
+
+        vkDestroyInstance(vkInstance, null)
     }
 }

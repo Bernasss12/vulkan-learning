@@ -19,7 +19,7 @@ import kotlin.io.path.readBytes
 class ShaderProgram(
     private val device: Device,
     shaderModuleData: List<ShaderModuleData>
-) {
+) : AutoCloseable {
     val shaderModules: List<ShaderModule>
 
     init {
@@ -57,7 +57,7 @@ class ShaderProgram(
         }
     }
 
-    fun cleanup() {
+    override fun close() {
         shaderModules.forEach { module ->
             vkDestroyShaderModule(
                 device.vkDevice,

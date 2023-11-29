@@ -20,7 +20,7 @@ import org.tinylog.kotlin.Logger
 
 class PhysicalDevice(
     val vkPhysicalDevice: VkPhysicalDevice,
-) {
+) : AutoCloseable {
 
     private val vkPhysicalDeviceProperties: VkPhysicalDeviceProperties by lazy {
         // Get device properties
@@ -88,7 +88,7 @@ class PhysicalDevice(
                         return@mapNotNull physicalDevice
                     } else {
                         Logger.debug("Device [$deviceName] does not support required extensions")
-                        physicalDevice.cleanup()
+                        physicalDevice.close()
                         return@mapNotNull null
                     }
                 }
@@ -100,7 +100,7 @@ class PhysicalDevice(
                 Logger.debug("Selected device: [${selectedPhysicalDevice.deviceName}]")
 
                 // Clean up all unused devices
-                devices.filterNot { device -> device == selectedPhysicalDevice }.forEach(PhysicalDevice::cleanup)
+                devices.filterNot { device -> device == selectedPhysicalDevice }.forEach(PhysicalDevice::close)
 
                 return selectedPhysicalDevice
             }
@@ -126,7 +126,7 @@ class PhysicalDevice(
     private fun hasGraphicsQueueFamily(): Boolean =
         vkQueueFamilyProperties.any { (it.queueFlags() and VK_QUEUE_GRAPHICS_BIT) != 0 }
 
-    fun cleanup() {
+    override fun close() {
         if (Logger.isDebugEnabled()) {
             Logger.debug("Destroying physical device [$deviceName]")
         }

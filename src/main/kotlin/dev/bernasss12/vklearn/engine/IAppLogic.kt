@@ -8,13 +8,7 @@ package dev.bernasss12.vklearn.engine
 
 import dev.bernasss12.vklearn.engine.graphics.Render
 
-interface IAppLogic {
-
-    /**
-     * Invoked when the application is finished.
-     * Release resources.
-     */
-    fun cleanup()
+interface IAppLogic : AutoCloseable {
 
     /**
      * Invoked on launch to create immediately needed resources.

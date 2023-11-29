@@ -15,7 +15,7 @@ import org.tinylog.kotlin.Logger
 
 class CommandPool(
     val device: Device, queueFamilyIndex: Int
-) {
+) : AutoCloseable {
     val vkCommandPool: Long
 
     init {
@@ -40,7 +40,7 @@ class CommandPool(
         }
     }
 
-    fun cleanup() {
+    override fun close() {
         vkDestroyCommandPool(device.vkDevice, vkCommandPool, null)
     }
 }

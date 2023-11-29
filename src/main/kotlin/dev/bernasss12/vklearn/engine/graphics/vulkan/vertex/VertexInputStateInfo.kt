@@ -8,11 +8,11 @@ package dev.bernasss12.vklearn.engine.graphics.vulkan.vertex
 
 import org.lwjgl.vulkan.VkPipelineVertexInputStateCreateInfo
 
-abstract class VertexInputStateInfo {
+abstract class VertexInputStateInfo : AutoCloseable {
 
     abstract val vertexCreateInfo: VkPipelineVertexInputStateCreateInfo
 
-    open fun cleanup() {
+    override fun close() {
         vertexCreateInfo.free()
     }
 }

@@ -14,7 +14,7 @@ import org.lwjgl.vulkan.VkSemaphoreCreateInfo
 
 class Semaphore(
     private val device: Device
-) {
+) : AutoCloseable {
     val vkSemaphore: Long
 
     init {
@@ -35,7 +35,7 @@ class Semaphore(
         }
     }
 
-    fun cleanup() {
+    override fun close() {
         vkDestroySemaphore(
             device.vkDevice,
             vkSemaphore,

@@ -24,7 +24,7 @@ class VulkanBuffer(
     size: Long,
     usage: Int,
     requirementsMask: Int,
-) {
+) : AutoCloseable {
 
     val vkBuffer: Long
     private val memory: Long
@@ -89,8 +89,7 @@ class VulkanBuffer(
     }
 
     fun map(): Long {
-        return _mappedMemory ?:
-        MemoryStack.stackPush().vkCreatePointer("Failed to map buffer") {
+        return _mappedMemory ?: MemoryStack.stackPush().vkCreatePointer("Failed to map buffer") {
             vkMapMemory(
                 device.vkDevice,
                 memory,
@@ -114,13 +113,16 @@ class VulkanBuffer(
         }
     }
 
+    /**
+     * Runs the given block of code giving access to the buffer and the handle for the mapped memory.
+     */
     inline fun use(block: (VulkanBuffer, mappedMemory: Long) -> Unit): VulkanBuffer {
         block(this, map())
         unMap()
         return this
     }
 
-    fun cleanup() {
+    override fun close() {
         MemoryUtil.memFree(pointerBuffer)
         vkDestroyBuffer(device.vkDevice, vkBuffer, null)
         vkFreeMemory(device.vkDevice, memory, null)

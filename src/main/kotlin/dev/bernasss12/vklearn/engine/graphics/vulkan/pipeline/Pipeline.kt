@@ -19,7 +19,7 @@ import org.tinylog.kotlin.Logger
 class Pipeline(
     pipelineCache: PipelineCache,
     pipelineCreationInfo: PipelineCreationInfo
-) {
+) : AutoCloseable {
     val device = pipelineCache.device
     private val vkPipelineLayout: Long
     val vkPipeline: Long
@@ -126,7 +126,7 @@ class Pipeline(
 
     }
 
-    fun cleanup() {
+    override fun close() {
         Logger.debug("Destroying pipeline")
         vkDestroyPipelineLayout(
             device.vkDevice,

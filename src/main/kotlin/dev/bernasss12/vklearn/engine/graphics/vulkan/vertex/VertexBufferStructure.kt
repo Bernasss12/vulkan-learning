@@ -13,7 +13,8 @@ import org.lwjgl.vulkan.VkPipelineVertexInputStateCreateInfo
 import org.lwjgl.vulkan.VkVertexInputAttributeDescription
 import org.lwjgl.vulkan.VkVertexInputBindingDescription
 
-class VertexBufferStructure : VertexInputStateInfo() {
+class VertexBufferStructure
+    : VertexInputStateInfo() {
 
     private val vertexCreateInfoAttributes: VkVertexInputAttributeDescription.Buffer
     private val vertexCreateInfoBindings: VkVertexInputBindingDescription.Buffer
@@ -39,8 +40,8 @@ class VertexBufferStructure : VertexInputStateInfo() {
         }
     }
 
-    override fun cleanup() {
-        super.cleanup()
+    override fun close() {
+        super.close()
         vertexCreateInfoBindings.free()
         vertexCreateInfoAttributes.free()
     }

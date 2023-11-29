@@ -14,7 +14,7 @@ import org.lwjgl.vulkan.VkFenceCreateInfo
 class Fence(
     private val device: Device,
     signaled: Boolean,
-) {
+) : AutoCloseable {
     val vkFence: Long
 
     init {
@@ -43,14 +43,6 @@ class Fence(
         }
     }
 
-    fun cleanup() {
-        vkDestroyFence(
-            device.vkDevice,
-            vkFence,
-            null,
-        )
-    }
-
     fun fenceWait() {
         vkWaitForFences(
             device.vkDevice,
@@ -64,6 +56,14 @@ class Fence(
         vkResetFences(
             device.vkDevice,
             vkFence,
+        )
+    }
+
+    override fun close() {
+        vkDestroyFence(
+            device.vkDevice,
+            vkFence,
+            null,
         )
     }
 }

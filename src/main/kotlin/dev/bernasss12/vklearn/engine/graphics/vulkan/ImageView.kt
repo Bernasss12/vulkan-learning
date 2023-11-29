@@ -16,15 +16,11 @@ class ImageView(
     private val device: Device,
     vkImage: Long,
     imageViewData: ImageViewData,
-) {
+) : AutoCloseable {
 
     private val aspectMask: Int = imageViewData.aspectMask
     private val mipLevels: Int = imageViewData.mipLevels
     val vkImageView: Long
-
-    fun cleanup() {
-        vkDestroyImageView(device.vkDevice, vkImageView, null)
-    }
 
     init {
         useMemoryStack { stack ->
@@ -59,6 +55,9 @@ class ImageView(
         }
     }
 
+    override fun close() {
+        vkDestroyImageView(device.vkDevice, vkImageView, null)
+    }
 
     data class ImageViewData(
         internal var aspectMask: Int,

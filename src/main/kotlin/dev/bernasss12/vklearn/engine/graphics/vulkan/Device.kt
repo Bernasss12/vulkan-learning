@@ -19,7 +19,7 @@ import org.tinylog.kotlin.Logger
 
 class Device(
     val physicalDevice: PhysicalDevice,
-) {
+) : AutoCloseable {
 
     val vkDevice: VkDevice
 
@@ -104,7 +104,7 @@ class Device(
     }
 
 
-    fun cleanup() {
+    override fun close() {
         Logger.debug("Destroying Vulkan device")
         vkDestroyDevice(vkDevice, null)
     }

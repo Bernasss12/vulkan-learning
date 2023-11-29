@@ -28,7 +28,7 @@ class SwapChain(
     vsync: Boolean,
     presentQueue: Queue.PresentQueue,
     concurrentQueues: List<Queue>,
-) {
+) : AutoCloseable {
     val imageViews: List<ImageView>
     val surfaceFormat: SurfaceFormat = calculateSurfaceFormat(device.physicalDevice, surface)
     val swapChainExtent: VkExtent2D
@@ -138,7 +138,7 @@ class SwapChain(
     }
 
     fun acquireNextImage(): Boolean {
-        useMemoryStack {  stack ->
+        useMemoryStack { stack ->
             currentFrame = stack.vkCreateInt { buffer ->
                 KHRSwapchain.vkAcquireNextImageKHR(
                     device.vkDevice,
@@ -159,11 +159,11 @@ class SwapChain(
         return false
     }
 
-    fun cleanup() {
+    override fun close() {
         Logger.debug("Destroying Vulkan SwapChain")
         swapChainExtent.free()
-        imageViews.forEach(ImageView::cleanup)
-        syncSemaphores.forEach(SyncSemaphores::cleanup)
+        imageViews.forEach(ImageView::close)
+        syncSemaphores.forEach(SyncSemaphores::close)
         KHRSwapchain.vkDestroySwapchainKHR(device.vkDevice, vkSwapChain, null)
     }
 
@@ -276,17 +276,18 @@ class SwapChain(
 
     data class SurfaceFormat(
         val imageFormat: Int,
-        val colorSpace: Int
+        val colorSpace: Int,
     )
 
     data class SyncSemaphores(
-        val imageAcquisitionSemaphore: Semaphore, val renderCompleteSemaphore: Semaphore
-    ) {
+        val imageAcquisitionSemaphore: Semaphore,
+        val renderCompleteSemaphore: Semaphore,
+    ) : AutoCloseable {
         constructor(device: Device) : this(Semaphore(device), Semaphore(device))
 
-        fun cleanup() {
-            imageAcquisitionSemaphore.cleanup()
-            renderCompleteSemaphore.cleanup()
+        override fun close() {
+            imageAcquisitionSemaphore.close()
+            renderCompleteSemaphore.close()
         }
     }
 }

@@ -90,7 +90,7 @@ open class Queue(
         device: Device,
         surface: Surface,
         queueIndex: Int,
-    ): Queue(
+    ) : Queue(
         device,
         getPresentQueueFamilyIndex(device, surface),
         queueIndex,

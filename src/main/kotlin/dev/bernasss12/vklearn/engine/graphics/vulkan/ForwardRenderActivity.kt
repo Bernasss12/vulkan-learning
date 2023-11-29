@@ -33,7 +33,7 @@ class ForwardRenderActivity(
     private val swapChain: SwapChain,
     commandPool: CommandPool,
     pipelineCache: PipelineCache,
-) {
+) : AutoCloseable {
 
     companion object {
         private const val FRAGMENT_SHADER_FILE_GLSL = "shaders/fwd_fragment.glsl"
@@ -95,7 +95,7 @@ class ForwardRenderActivity(
                 pipelineCache = pipelineCache,
                 pipelineCreationInfo = pipelineCreationInfo,
             )
-            pipelineCreationInfo.cleanup()
+            pipelineCreationInfo.close()
 
             commandBuffers = List(swapChain.imageViews.size) {
                 CommandBuffer(
@@ -147,10 +147,10 @@ class ForwardRenderActivity(
             commandBuffer.reset()
             val clearValues = VkClearValue.calloc(1, stack).apply(0) { value ->
                 value.color().apply {
-                float32(0, 0.5f) // R
-                float32(1, 0.7f) // G
-                float32(2, 0.9f) // B
-                float32(3, 1f)   // A
+                    float32(0, 0.5f) // R
+                    float32(1, 0.7f) // G
+                    float32(2, 0.9f) // B
+                    float32(3, 1f)   // A
                 }
             }
 
@@ -217,10 +217,12 @@ class ForwardRenderActivity(
         }
     }
 
-    fun cleanup() {
-        frameBuffers.forEach(FrameBuffer::cleanup)
-        renderPass.cleanup()
-        commandBuffers.forEach(CommandBuffer::cleanup)
-        fences.forEach(Fence::cleanup)
+    override fun close() {
+        pipeline.close()
+        forwardShaderProgram.close()
+        frameBuffers.forEach(FrameBuffer::close)
+        renderPass.close()
+        commandBuffers.forEach(CommandBuffer::close)
+        fences.forEach(Fence::close)
     }
 }

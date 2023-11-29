@@ -12,7 +12,7 @@ import dev.bernasss12.vklearn.util.EngineProperties
 class Engine(
     windowTitle: String,
     private val appLogic: IAppLogic
-) {
+) : AutoCloseable {
 
     private val window: Window
     private val render: Render
@@ -26,10 +26,10 @@ class Engine(
         appLogic.init(window, scene, render)
     }
 
-    private fun cleanup() {
-        appLogic.cleanup()
-        render.cleanup()
-        window.cleanup()
+    override fun close() {
+        appLogic.close()
+        render.close()
+        window.close()
     }
 
     private fun run() {
@@ -59,7 +59,7 @@ class Engine(
             initialTime = currentTime
         }
 
-        cleanup()
+        close()
     }
 
     fun start() {

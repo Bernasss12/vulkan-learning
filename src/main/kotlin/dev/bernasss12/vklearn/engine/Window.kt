@@ -86,7 +86,7 @@ class Window(
         resized = false
     }
 
-    fun cleanup() {
+    fun close() {
         glfwFreeCallbacks(handle)
         glfwDestroyWindow(handle)
         glfwTerminate()

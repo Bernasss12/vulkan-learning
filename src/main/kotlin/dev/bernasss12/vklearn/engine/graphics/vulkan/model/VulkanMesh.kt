@@ -12,9 +12,9 @@ data class VulkanMesh(
     val verticesBuffer: VulkanBuffer,
     val indicesBuffer: VulkanBuffer,
     val indicesCount: Int,
-) {
-    fun cleanup() {
-        verticesBuffer.cleanup()
-        indicesBuffer.cleanup()
+) : AutoCloseable {
+    override fun close() {
+        verticesBuffer.close()
+        indicesBuffer.close()
     }
 }

@@ -15,7 +15,7 @@ import org.tinylog.kotlin.Logger
 class Surface(
     private val physicalDevice: PhysicalDevice,
     windowHandle: Long,
-) {
+) : AutoCloseable {
 
     val vkSurface: Long
 
@@ -33,7 +33,7 @@ class Surface(
         }
     }
 
-    fun cleanup() {
+    override fun close() {
         Logger.debug("Destroying Vulkan surface")
         KHRSurface.vkDestroySurfaceKHR(
             physicalDevice.vkPhysicalDevice.instance,

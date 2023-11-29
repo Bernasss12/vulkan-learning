@@ -14,7 +14,7 @@ import org.lwjgl.vulkan.VK10.*
 
 class RenderPass(
     private val swapChain: SwapChain
-) {
+) : AutoCloseable {
     val vkRenderPass: Long
 
     init {
@@ -69,7 +69,7 @@ class RenderPass(
         }
     }
 
-    fun cleanup() {
+    override fun close() {
         vkDestroyRenderPass(swapChain.device.vkDevice, vkRenderPass, null)
     }
 }

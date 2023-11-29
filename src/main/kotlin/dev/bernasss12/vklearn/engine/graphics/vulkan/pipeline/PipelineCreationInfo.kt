@@ -14,8 +14,8 @@ data class PipelineCreationInfo(
     val shaderProgram: ShaderProgram,
     val colorAttachmentCount: Int,
     val vertexInputStateInfo: VertexInputStateInfo,
-) {
-    fun cleanup() {
-        vertexInputStateInfo.cleanup()
+) : AutoCloseable {
+    override fun close() {
+        vertexInputStateInfo.close()
     }
 }

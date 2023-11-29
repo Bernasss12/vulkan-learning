@@ -19,7 +19,7 @@ import org.tinylog.kotlin.Logger
 
 class Main : IAppLogic {
 
-    override fun cleanup() {
+    override fun close() {
         EngineProperties.save()
     }
 

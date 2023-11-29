@@ -20,7 +20,7 @@ import org.tinylog.kotlin.Logger
 class Render(
     window: Window,
     scene: Scene
-) {
+) : AutoCloseable {
 
     private val instance: Instance
     private val physicalDevice: PhysicalDevice
@@ -74,18 +74,19 @@ class Render(
         vulkanModels = mutableListOf()
     }
 
-    fun cleanup() {
+    override fun close() {
         presentQueue.waitIdle()
         graphicsQueue.waitIdle()
         device.waitIdle()
-        forwardRenderActivity.cleanup()
-        commandPool.cleanup()
-        swapChain.cleanup()
-        surface.cleanup()
-        device.cleanup()
-        physicalDevice.cleanup()
-        instance.cleanup()
-        vulkanModels.forEach(VulkanModel::cleanup)
+        vulkanModels.forEach(VulkanModel::close)
+        pipelineCache.close()
+        forwardRenderActivity.close()
+        commandPool.close()
+        swapChain.close()
+        surface.close()
+        device.close()
+        physicalDevice.close()
+        instance.close()
     }
 
     fun loadModels(modelDataList: List<ModelData>) {

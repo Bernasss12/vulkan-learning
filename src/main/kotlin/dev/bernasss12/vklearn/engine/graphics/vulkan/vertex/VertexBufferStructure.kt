@@ -7,6 +7,7 @@
 package dev.bernasss12.vklearn.engine.graphics.vulkan.vertex
 
 import dev.bernasss12.vklearn.util.GraphConstants
+import dev.bernasss12.vklearn.util.VulkanUtils.applyOn
 import dev.bernasss12.vklearn.util.VulkanUtils.applyOnFirst
 import org.lwjgl.vulkan.VK10.*
 import org.lwjgl.vulkan.VkPipelineVertexInputStateCreateInfo
@@ -21,12 +22,21 @@ class VertexBufferStructure
     override val vertexCreateInfo: VkPipelineVertexInputStateCreateInfo
 
     init {
-        vertexCreateInfoAttributes = VkVertexInputAttributeDescription.calloc(NUMBER_OF_ATTRIBUTES).applyOnFirst {
-            binding(0)
-            location(0)
-            format(VK_FORMAT_R32G32B32_SFLOAT)
-            offset(0)
-        }
+        vertexCreateInfoAttributes = VkVertexInputAttributeDescription.calloc(NUMBER_OF_ATTRIBUTES)
+            .applyOn(0) {
+                // Position coordinates
+                binding(0)
+                location(0)
+                format(VK_FORMAT_R32G32B32_SFLOAT)
+                offset(0)
+            }.applyOn(1) {
+                // Texture coordinates
+                binding(0)
+                location(1)
+                format(VK_FORMAT_R32G32_SFLOAT)
+                offset(POSITION_COMPONENTS * GraphConstants.FLOAT_LENGTH)
+            }
+
         vertexCreateInfoBindings = VkVertexInputBindingDescription.calloc(1).applyOnFirst {
             binding(0)
             stride(POSITION_COMPONENTS * GraphConstants.FLOAT_LENGTH)
@@ -47,7 +57,8 @@ class VertexBufferStructure
     }
 
     companion object {
-        const val NUMBER_OF_ATTRIBUTES = 1
+        const val NUMBER_OF_ATTRIBUTES = 2
         const val POSITION_COMPONENTS = 3
+        const val TEXT_COORD_COMPONENTS = 2
     }
 }

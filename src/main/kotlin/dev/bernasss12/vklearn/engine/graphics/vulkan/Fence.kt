@@ -31,7 +31,7 @@ class Fence(
             }
 
             vkFence = stack.vkCreateLong(
-                "Failed to create fence"
+                "fence"
             ) { buffer ->
                 vkCreateFence(
                     device.vkDevice,

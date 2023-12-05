@@ -32,7 +32,7 @@ class FrameBuffer(
                 renderPass(renderPass)
             }
 
-            vkFrameBuffer = stack.vkCreateLong("Failed to create FrameBuffer") { buffer ->
+            vkFrameBuffer = stack.vkCreateLong("frame buffer") { buffer ->
                 vkCreateFramebuffer(
                     device.vkDevice,
                     frameBufferCreateInfo,

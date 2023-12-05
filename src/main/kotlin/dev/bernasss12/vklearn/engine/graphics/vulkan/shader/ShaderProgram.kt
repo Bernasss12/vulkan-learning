@@ -46,7 +46,7 @@ class ShaderProgram(
                 pCode(contentBuffer)
             }
 
-            return stack.vkCreateLong("Failed to create shader module") { buffer ->
+            return stack.vkCreateLong("shader module") { buffer ->
                 vkCreateShaderModule(
                     device.vkDevice,
                     moduleCreateInfo,

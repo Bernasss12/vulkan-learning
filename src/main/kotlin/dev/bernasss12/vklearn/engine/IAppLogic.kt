@@ -6,14 +6,14 @@
 
 package dev.bernasss12.vklearn.engine
 
-import dev.bernasss12.vklearn.engine.graphics.Render
+import dev.bernasss12.vklearn.engine.graphics.Renderer
 
 interface IAppLogic : AutoCloseable {
 
     /**
      * Invoked on launch to create immediately needed resources.
      */
-    fun init(window: Window, scene: Scene, render: Render)
+    fun init(window: Window, scene: Scene, render: Renderer)
 
     /**
      * Invoked periodically to update app states and react to user input.

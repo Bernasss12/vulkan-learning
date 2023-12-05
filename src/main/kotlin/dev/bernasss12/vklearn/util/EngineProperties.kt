@@ -15,7 +15,6 @@ import java.util.*
 object EngineProperties {
 
     private val props = Properties()
-
     private const val FILENAME = "engine.properties"
 
     private const val DEFAULT_UPS = 30
@@ -23,14 +22,20 @@ object EngineProperties {
     private const val DEFAULT_REQUESTED_IMAGES = 3
     private const val DEFAULT_VSYNC = true
     private const val DEFAULT_SHADER_RECOMPILATION = false
+    private const val DEFAULT_FOV = 60f
+    private const val DEFAULT_Z_NEAR = 1f
+    private const val DEFAULT_Z_FAR = 100f
 
     // Updates per second
-    val ups: Int
-    val validate: Boolean
-    val physicalDeviceName: String
-    val requestedImages: Int
-    val vsync: Boolean
-    val shaderRecompilation: Boolean
+    var ups: Int
+    var validate: Boolean
+    var physicalDeviceName: String
+    var requestedImages: Int
+    var vsync: Boolean
+    var shaderRecompilation: Boolean
+    var fov: Float
+    var zNear: Float
+    var zFar: Float
 
     init {
         load()
@@ -43,6 +48,9 @@ object EngineProperties {
         requestedImages = props.getPropertyOrDefault("requested_images", DEFAULT_REQUESTED_IMAGES, String::toInt)
         vsync = props.getPropertyOrDefault("vsync", DEFAULT_VSYNC, String::toBoolean)
         shaderRecompilation = props.getPropertyOrDefault("shader_recompilation", DEFAULT_SHADER_RECOMPILATION, String::toBoolean)
+        fov = props.getPropertyOrDefault("fov", DEFAULT_FOV, String::toFloat)
+        zNear = props.getPropertyOrDefault("z_near", DEFAULT_Z_NEAR, String::toFloat)
+        zFar = props.getPropertyOrDefault("z_far", DEFAULT_Z_FAR, String::toFloat)
 
         // If new properties have been added override the file with the new properties, so they can be externally changed.
         // This is good in case the program crashes before gracefully shutting down.

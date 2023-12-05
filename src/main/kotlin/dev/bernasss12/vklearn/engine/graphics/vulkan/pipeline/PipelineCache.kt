@@ -26,7 +26,7 @@ class PipelineCache(
                 sType(VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO)
             }
 
-            vkPipelineCache = stack.vkCreateLong("Error creating pipeline cache") { buffer ->
+            vkPipelineCache = stack.vkCreateLong("pipeline cache") { buffer ->
                 vkCreatePipelineCache(
                     device.vkDevice,
                     vkPipelineCacheCreateInfo,

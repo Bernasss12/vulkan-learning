@@ -5,11 +5,18 @@
  */
 @file:Suppress("MemberVisibilityCanBePrivate")
 
-package dev.bernasss12.vklearn.engine.input
+package dev.bernasss12.vklearn.engine.input.mouse
 
 import org.joml.Vector2f
 import org.lwjgl.glfw.GLFW.*
 
+/* TODO - Mouse related stuff, not necessarily meant to be in this class.
+    - Create all mouse button click possibilities [0-5].
+    - Add support for double clicks, drag and other useful mouse actions.
+    - Grab and release mouse cursor.
+    - Add support to hide mouse cursor and also for custom mouse cursors.
+    - Only care about mouse input when window is in focus or at least mouse is over window.
+ */
 class MouseInput(windowHandle: Long) {
     val currentPosition: Vector2f = Vector2f()
     private val previousPosition: Vector2f = Vector2f(-1f, -1f)

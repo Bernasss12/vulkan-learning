@@ -27,9 +27,7 @@ class CommandPool(
                 queueFamilyIndex(queueFamilyIndex)
             }
 
-            vkCommandPool = stack.vkCreateLong(
-                "Failed to create command pool"
-            ) { buffer ->
+            vkCommandPool = stack.vkCreateLong("Vulkan command pool") { buffer ->
                 vkCreateCommandPool(
                     device.vkDevice,
                     commandPoolCreateInfo,

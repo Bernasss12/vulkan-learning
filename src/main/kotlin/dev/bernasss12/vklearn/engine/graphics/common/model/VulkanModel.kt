@@ -4,7 +4,7 @@
  * For the purpose of not bloating every single file in the project, refer to the version of the MIT license provided in the project in `LICENCE.md`
  */
 
-package dev.bernasss12.vklearn.engine.graphics.vulkan.model
+package dev.bernasss12.vklearn.engine.graphics.common.model
 
 import dev.bernasss12.vklearn.engine.graphics.vulkan.Device
 import dev.bernasss12.vklearn.engine.graphics.vulkan.Fence
@@ -13,11 +13,12 @@ import dev.bernasss12.vklearn.engine.graphics.vulkan.VulkanBuffer
 import dev.bernasss12.vklearn.engine.graphics.vulkan.command.CommandBuffer
 import dev.bernasss12.vklearn.engine.graphics.vulkan.command.CommandPool
 import dev.bernasss12.vklearn.util.GraphConstants
+import dev.bernasss12.vklearn.util.Utils
+import dev.bernasss12.vklearn.util.VulkanUtils.applyOnFirst
 import dev.bernasss12.vklearn.util.VulkanUtils.useMemoryStack
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.VK10.*
 import org.lwjgl.vulkan.VkBufferCopy
-import kotlin.apply as standardApply
 
 
 class VulkanModel private constructor(
@@ -98,12 +99,17 @@ class VulkanModel private constructor(
                     size = bufferSize,
                     usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                     requirementsMask = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-                ).use { source, mappedMemory ->
+                ).applyWithMemory { mappedMemory ->
                     MemoryUtil.memFloatBuffer(
                         mappedMemory,
-                        source.requestedSize.toInt()
-                    ).standardApply {
-                        put(meshData.positions)
+                        requestedSize.toInt(),
+                    ).apply {
+                        put(
+                            Utils.interleaveFloatArrays(
+                                3 to meshData.positions,
+                                2 to meshData.textureCoords
+                            )
+                        )
                     }
                 },
                 VulkanBuffer(
@@ -119,7 +125,7 @@ class VulkanModel private constructor(
             device: Device,
             meshData: MeshData
         ): TransferBuffers {
-            val bufferSize = meshData.positions.size * GraphConstants.INT_LENGTH.toLong()
+            val bufferSize = meshData.indices.size * GraphConstants.INT_LENGTH.toLong()
 
             return TransferBuffers(
                 VulkanBuffer(
@@ -127,11 +133,11 @@ class VulkanModel private constructor(
                     size = bufferSize,
                     usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                     requirementsMask = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-                ).use { source, mappedMemory ->
+                ).applyWithMemory { mappedMemory ->
                     MemoryUtil.memIntBuffer(
                         mappedMemory,
-                        source.requestedSize.toInt()
-                    ).standardApply {
+                        requestedSize.toInt(),
+                    ).apply {
                         put(meshData.indices)
                     }
                 },
@@ -153,7 +159,7 @@ class VulkanModel private constructor(
                     commandBuffer.vkCommandBuffer,
                     transferBuffers.source.vkBuffer,
                     transferBuffers.destination.vkBuffer,
-                    VkBufferCopy.calloc(1, stack).standardApply {
+                    VkBufferCopy.calloc(1, stack).applyOnFirst {
                         srcOffset(0)
                         dstOffset(0)
                         size(transferBuffers.source.requestedSize)

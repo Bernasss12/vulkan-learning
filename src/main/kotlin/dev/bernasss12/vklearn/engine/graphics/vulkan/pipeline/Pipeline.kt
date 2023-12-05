@@ -21,12 +21,11 @@ class Pipeline(
     pipelineCreationInfo: PipelineCreationInfo
 ) : AutoCloseable {
     val device = pipelineCache.device
-    private val vkPipelineLayout: Long
+    val vkPipelineLayout: Long
     val vkPipeline: Long
 
     init {
         useMemoryStack { stack ->
-
             val main = stack.UTF8("main")
             val shaderModules = pipelineCreationInfo.shaderProgram.shaderModules
             val moduleCount = shaderModules.size
@@ -92,9 +91,18 @@ class Pipeline(
 
             val pPipelineLayoutCreateInfo = VkPipelineLayoutCreateInfo.calloc(stack).apply {
                 sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO)
+                if (pipelineCreationInfo.pushConstantSize > 0) {
+                    pPushConstantRanges(
+                        VkPushConstantRange.calloc(1, stack).applyOnFirst {
+                            stageFlags(VK_SHADER_STAGE_VERTEX_BIT)
+                            offset(0)
+                            size(pipelineCreationInfo.pushConstantSize)
+                        }
+                    )
+                }
             }
 
-            vkPipelineLayout = stack.vkCreateLong("Failed to create pipeline layout") { buffer ->
+            vkPipelineLayout = stack.vkCreateLong("pipeline layout") { buffer ->
                 vkCreatePipelineLayout(device.vkDevice, pPipelineLayoutCreateInfo, null, buffer)
             }
 
@@ -110,9 +118,21 @@ class Pipeline(
                 pDynamicState(vkPipelineDynamicStateCreateInfo)
                 layout(vkPipelineLayout)
                 renderPass(pipelineCreationInfo.vkRenderPass)
+                if (pipelineCreationInfo.hasDepthAttachment) {
+                    pDepthStencilState(
+                        VkPipelineDepthStencilStateCreateInfo.calloc(stack).apply {
+                            sType(VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO)
+                            depthTestEnable(true)
+                            depthWriteEnable(true)
+                            depthCompareOp(VK_COMPARE_OP_LESS_OR_EQUAL)
+                            depthBoundsTestEnable(false)
+                            stencilTestEnable(false)
+                        }
+                    )
+                }
             }
 
-            vkPipeline = stack.vkCreateLong("Error creating graphics pipeline") { buffer ->
+            vkPipeline = stack.vkCreateLong("graphics pipeline") { buffer ->
                 vkCreateGraphicsPipelines(
                     device.vkDevice,
                     pipelineCache.vkPipelineCache,
@@ -122,8 +142,6 @@ class Pipeline(
                 )
             }
         }
-
-
     }
 
     override fun close() {

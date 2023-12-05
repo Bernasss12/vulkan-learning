@@ -10,17 +10,17 @@ import dev.bernasss12.vklearn.engine.Scene
 import dev.bernasss12.vklearn.engine.Window
 import dev.bernasss12.vklearn.engine.graphics.vulkan.*
 import dev.bernasss12.vklearn.engine.graphics.vulkan.command.CommandPool
-import dev.bernasss12.vklearn.engine.graphics.vulkan.model.ModelData
-import dev.bernasss12.vklearn.engine.graphics.vulkan.model.VulkanModel
+import dev.bernasss12.vklearn.engine.graphics.common.model.ModelData
+import dev.bernasss12.vklearn.engine.graphics.common.model.VulkanModel
 import dev.bernasss12.vklearn.engine.graphics.vulkan.pipeline.PipelineCache
 import dev.bernasss12.vklearn.engine.graphics.vulkan.swapchain.SwapChain
 import dev.bernasss12.vklearn.util.EngineProperties
 import org.tinylog.kotlin.Logger
 
-class Render(
+class VulkanRenderer(
     window: Window,
     scene: Scene
-) : AutoCloseable {
+) : Renderer {
 
     private val instance: Instance
     private val physicalDevice: PhysicalDevice
@@ -28,7 +28,7 @@ class Render(
     private val surface: Surface
     private val graphicsQueue: Queue.GraphicsQueue
     private val presentQueue: Queue.PresentQueue
-    private val swapChain: SwapChain
+    private var swapChain: SwapChain
     private val commandPool: CommandPool
     private val forwardRenderActivity: ForwardRenderActivity
     private val vulkanModels: MutableList<VulkanModel>
@@ -49,7 +49,11 @@ class Render(
             device = device,
             queueIndex = 0
         )
-        presentQueue = Queue.PresentQueue(device, surface, 0)
+        presentQueue = Queue.PresentQueue(
+            device = device,
+            surface = surface,
+            queueIndex = 0
+        )
         swapChain = SwapChain(
             device = device,
             surface = surface,
@@ -69,7 +73,8 @@ class Render(
         forwardRenderActivity = ForwardRenderActivity(
             swapChain = swapChain,
             commandPool = commandPool,
-            pipelineCache = pipelineCache
+            pipelineCache = pipelineCache,
+            scene = scene,
         )
         vulkanModels = mutableListOf()
     }
@@ -89,19 +94,48 @@ class Render(
         instance.close()
     }
 
-    fun loadModels(modelDataList: List<ModelData>) {
+    override fun loadModels(modelDataList: List<ModelData>) {
         Logger.debug("Loading ${modelDataList.size} model(s).")
         vulkanModels.addAll(VulkanModel.transformModels(modelDataList, commandPool, graphicsQueue))
         Logger.debug("Loaded ${modelDataList.size} model(s).")
     }
 
-    fun render(window: Window, scene: Scene) {
-        swapChain.acquireNextImage()
+    override fun render(window: Window, scene: Scene) {
+        // Check if the current window size is a valid size for graphics rendering
+        if (!window.size.valid) return
+
+        // If the window is marked as resized or swap-chain fails to acquire the next image due to window resizing
+        if (window.size.dirty || swapChain.acquireNextImage()) {
+            window.size.markClean()
+            resize(window)
+            scene.projection.resize(window.width, window.height)
+            swapChain.acquireNextImage()
+        }
 
         forwardRenderActivity.recordCommandBuffer(vulkanModels)
         forwardRenderActivity.submit(graphicsQueue)
 
-        swapChain.presentImage(presentQueue)
+        if(swapChain.presentImage(presentQueue)) {
+            window.size.markClean()
+        }
+    }
+
+    private fun resize(window: Window) {
+        device.waitIdle()
+        graphicsQueue.waitIdle()
+
+        swapChain.close()
+        swapChain = SwapChain(
+            device = device,
+            surface = surface,
+            window = window,
+            requestedImages = EngineProperties.requestedImages,
+            vsync = EngineProperties.vsync,
+            presentQueue = presentQueue,
+            concurrentQueues = emptyList()
+        )
+
+        forwardRenderActivity.resize(swapChain)
     }
 
 }

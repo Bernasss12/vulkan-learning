@@ -4,8 +4,9 @@
  * For the purpose of not bloating every single file in the project, refer to the version of the MIT license provided in the project in `LICENCE.md`
  */
 
-package dev.bernasss12.vklearn.engine.graphics.vulkan
+package dev.bernasss12.vklearn.engine.graphics.vulkan.image
 
+import dev.bernasss12.vklearn.engine.graphics.vulkan.Device
 import dev.bernasss12.vklearn.util.VulkanUtils.useMemoryStack
 import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
 import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateLong
@@ -43,7 +44,7 @@ class ImageView(
 
             // Allocate long buffer and create image view from info
             vkImageView = stack.vkCreateLong(
-                "Failed to create image view"
+                "image view"
             ) { buffer ->
                 vkCreateImageView(
                     device.vkDevice,
@@ -60,8 +61,8 @@ class ImageView(
     }
 
     data class ImageViewData(
-        internal var aspectMask: Int,
-        internal var format: Int,
+        internal var aspectMask: Int = 0,
+        internal var format: Int = 0,
         internal var baseArrayLayer: Int = 0,
         internal var layerCount: Int = 1,
         internal var mipLevels: Int = 1,

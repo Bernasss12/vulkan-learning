@@ -26,7 +26,7 @@ class CommandBuffer(
     val vkCommandBuffer: VkCommandBuffer
 
     init {
-        Logger.trace("Creating command buffer")
+        Logger.debug("Creating command buffer")
         useMemoryStack { stack ->
             val commandBufferAllocateInfo = VkCommandBufferAllocateInfo.calloc(stack).apply {
                 sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
@@ -100,7 +100,7 @@ class CommandBuffer(
     }
 
     override fun close() {
-        Logger.trace("Destroying command buffer")
+        Logger.debug("Destroying command buffer")
         vkFreeCommandBuffers(
             commandPool.device.vkDevice,
             commandPool.vkCommandPool,

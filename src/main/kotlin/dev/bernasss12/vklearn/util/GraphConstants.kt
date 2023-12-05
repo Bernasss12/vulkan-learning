@@ -9,5 +9,5 @@ package dev.bernasss12.vklearn.util
 object GraphConstants {
     const val FLOAT_LENGTH = 4
     const val INT_LENGTH = 4
-    private const val MAT4x4_SIZE = 16 * FLOAT_LENGTH
+    const val MAT4x4_SIZE = 16 * FLOAT_LENGTH
 }

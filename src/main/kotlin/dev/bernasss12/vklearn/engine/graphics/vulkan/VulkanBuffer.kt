@@ -44,7 +44,7 @@ class VulkanBuffer(
                 sharingMode(VK_SHARING_MODE_EXCLUSIVE)
             }
 
-            vkBuffer = stack.vkCreateLong("Failed to create buffer") { buffer ->
+            vkBuffer = stack.vkCreateLong("buffer") { buffer ->
                 vkCreateBuffer(
                     device.vkDevice,
                     vkBufferCreateInfo,
@@ -68,7 +68,7 @@ class VulkanBuffer(
                 )
             }
 
-            memory = stack.vkCreateLong("Failed to allocate memory") { buffer ->
+            memory = stack.vkCreateLong("memory allocation") { buffer ->
                 vkAllocateMemory(
                     device.vkDevice,
                     memoryAllocateInfo,
@@ -116,7 +116,7 @@ class VulkanBuffer(
     /**
      * Runs the given block of code giving access to the buffer and the handle for the mapped memory.
      */
-    inline fun use(block: (VulkanBuffer, mappedMemory: Long) -> Unit): VulkanBuffer {
+    inline fun applyWithMemory(block: VulkanBuffer.(mappedMemory: Long) -> Unit): VulkanBuffer {
         block(this, map())
         unMap()
         return this

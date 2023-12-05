@@ -6,7 +6,7 @@
 
 package dev.bernasss12.vklearn.engine
 
-import dev.bernasss12.vklearn.engine.graphics.Render
+import dev.bernasss12.vklearn.engine.graphics.VulkanRenderer
 import dev.bernasss12.vklearn.util.EngineProperties
 
 class Engine(
@@ -15,14 +15,14 @@ class Engine(
 ) : AutoCloseable {
 
     private val window: Window
-    private val render: Render
+    private val render: VulkanRenderer
     private val scene: Scene
     private var running: Boolean = false
 
     init {
         this.window = Window(windowTitle)
         this.scene = Scene(window)
-        this.render = Render(window, scene)
+        this.render = VulkanRenderer(window, scene)
         appLogic.init(window, scene, render)
     }
 

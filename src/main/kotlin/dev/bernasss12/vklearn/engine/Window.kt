@@ -6,7 +6,7 @@
 
 package dev.bernasss12.vklearn.engine
 
-import dev.bernasss12.vklearn.engine.input.MouseInput
+import dev.bernasss12.vklearn.engine.input.mouse.MouseInput
 import dev.bernasss12.vklearn.util.VulkanUtils.notNullOrThrow
 import org.lwjgl.glfw.Callbacks.glfwFreeCallbacks
 import org.lwjgl.glfw.GLFW.*
@@ -21,13 +21,11 @@ class Window(
 
     private val mouseInput: MouseInput
     val handle: Long
-    var height: Int
-    var width: Int
-    private var resized: Boolean = false
+    val size: Size
+    val width: Int get() = size.width
+    val height: Int get() = size.height
 
     init {
-        resized = false
-
         if (!glfwInit()) {
             throw IllegalStateException("Unable to initialize GLFW")
         }
@@ -37,8 +35,10 @@ class Window(
         }
 
         val videoMode = glfwGetVideoMode(glfwGetPrimaryMonitor())!! // This is unsafe TODO make sure video mode is not null.
-        width = videoMode.width()
-        height = videoMode.height()
+        size = Size(
+            videoMode.width(),
+            videoMode.height(),
+        )
 
         glfwDefaultWindowHints()
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API)
@@ -49,7 +49,7 @@ class Window(
             .notNullOrThrow("Failed to create the GLFW window")
 
         glfwSetFramebufferSizeCallback(handle) { _, w, h ->
-            resize(w, h)
+            size.resize(w, h)
         }
 
         glfwSetKeyCallback(handle) { window, key, scancode, action, mods ->
@@ -69,22 +69,12 @@ class Window(
         mouseInput = MouseInput(handle)
     }
 
-    private fun resize(width: Int, height: Int) {
-        resized = true
-        this.width = width
-        this.height = height
-    }
-
     fun pollEvents() {
         glfwPollEvents()
         mouseInput.input()
     }
 
     fun isKeyPressed(keyCode: Int) = glfwGetKey(handle, keyCode) == GLFW_PRESS
-
-    fun resetResized() {
-        resized = false
-    }
 
     fun close() {
         glfwFreeCallbacks(handle)
@@ -95,4 +85,49 @@ class Window(
     private fun setShouldClose() = glfwSetWindowShouldClose(handle, true)
 
     fun shouldClose() = glfwWindowShouldClose(handle)
+
+
+    /**
+     * Holds window size and keeps track whether it has been changed
+     */
+    data class Size(
+        private var _width: Int,
+        private var _height: Int,
+    ) {
+        /**
+         * If Size was changed and not yet cleared, this will be 'true'.
+         * This is so other parts of the code that use Window can be sure the size hasn't changed or in case it did, it can be managed accordingly.
+         */
+        var dirty: Boolean = false; private set
+        val valid: Boolean get() = _width > 0 && _height > 0
+
+        val width: Int get() = _width
+        val height: Int get() = _height
+
+        /**
+         * Sets the width and height of the Size and marks itself as dirty for further processing.
+         */
+        fun resize(
+            width: Int,
+            height: Int,
+        ) {
+            this.markDirty()
+            this._width = width
+            this._height = height
+        }
+
+        /**
+         * Defines that the size has been changed.
+         */
+        fun markDirty() {
+            dirty = true
+        }
+
+        /**
+         * Defines that the size is now clean after being changed.
+         */
+        fun markClean() {
+            dirty = false
+        }
+    }
 }

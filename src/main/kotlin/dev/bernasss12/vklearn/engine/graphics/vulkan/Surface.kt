@@ -22,7 +22,7 @@ class Surface(
     init {
         Logger.debug("Creating Vulkan surface")
         useMemoryStack { stack ->
-            vkSurface = stack.vkCreateLong { buffer ->
+            vkSurface = stack.vkCreateLong("Vulkan surface") { buffer ->
                 GLFWVulkan.glfwCreateWindowSurface(
                     physicalDevice.vkPhysicalDevice.instance,
                     windowHandle,

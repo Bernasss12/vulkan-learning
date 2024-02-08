@@ -14,7 +14,9 @@ import java.util.*
 
 object EngineProperties {
 
-    private val props = Properties()
+    private val props = object : Properties() {
+        override val keys: MutableSet<Any> = mutableSetOf()
+    }
     private const val FILENAME = "engine.properties"
 
     private const val DEFAULT_UPS = 30

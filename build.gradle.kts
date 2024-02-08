@@ -1,3 +1,4 @@
+import org.gradle.jvm.tasks.Jar
 import org.gradle.nativeplatform.platform.internal.DefaultOperatingSystem
 
 plugins {
@@ -59,4 +60,10 @@ kotlin {
 
 application {
     mainClass.set("dev.bernasss12.vklearn.MainKt")
+}
+
+tasks.withType<Jar> {
+    manifest {
+        attributes["Main-Class"] = "dev.bernasss12.vklearn.MainKt"
+    }
 }

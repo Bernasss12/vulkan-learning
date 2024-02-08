@@ -6,6 +6,8 @@
 
 package dev.bernasss12.vklearn.util
 
+import org.joml.Math
+
 object Utils {
     internal fun getOperatingSystem(): OperatingSystems {
         val system = System.getProperty("os.name", "generic").lowercase()
@@ -41,9 +43,17 @@ object Utils {
         }
 
         // All arguments **should** be good to work with now...
-        return arrays.map { (amount, array) ->
+        val chunked = arrays.map { (amount, array) ->
             array.toList().chunked(amount)
-        }.interleave().flatten().toFloatArray()
+        }
+
+        val interleaved = chunked.interleave()
+
+        val flat = interleaved.flatten()
+
+        val array = flat.toFloatArray()
+
+        return array
     }
 
     private fun <T> List<List<T>>.interleave(): List<T> {
@@ -61,6 +71,8 @@ object Utils {
         }
         return result
     }
+
+    fun Float.toRadians() = Math.toRadians(this)
 
     /**
      * Closes all elements of iterable.

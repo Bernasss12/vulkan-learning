@@ -24,7 +24,7 @@ class Main : IAppLogic {
 
 
     override fun init(window: Window, scene: Scene, render: Renderer) {
-        val modelId = "CubaModel"
+        val modelId = "CubeModel"
         val meshDataList = listOf(
             MeshData(
                 floatArrayOf(

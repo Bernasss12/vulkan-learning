@@ -51,7 +51,7 @@ class ImageView(
                     imageViewCreateInfo,
                     null,
                     buffer
-                ).vkAssertSuccess("Failed to create image view")
+                )
             }
         }
     }

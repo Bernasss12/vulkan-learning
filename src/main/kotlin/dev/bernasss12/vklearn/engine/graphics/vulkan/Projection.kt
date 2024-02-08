@@ -7,6 +7,7 @@
 package dev.bernasss12.vklearn.engine.graphics.vulkan
 
 import dev.bernasss12.vklearn.util.EngineProperties
+import dev.bernasss12.vklearn.util.Utils.toRadians
 import org.joml.Matrix4f
 
 class Projection(
@@ -26,8 +27,8 @@ class Projection(
         projectionMatrix.identity()
         EngineProperties.apply {
             projectionMatrix.perspective(
-                fov,
-                width.toFloat() / height,
+                fov.toRadians(),
+                width.toFloat() / height.toFloat(),
                 zNear,
                 zFar,
                 true,

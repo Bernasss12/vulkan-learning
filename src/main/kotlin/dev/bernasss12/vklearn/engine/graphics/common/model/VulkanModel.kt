@@ -91,7 +91,7 @@ class VulkanModel private constructor(
             device: Device,
             meshData: MeshData,
         ): TransferBuffers {
-            val bufferSize = meshData.positions.size * GraphConstants.FLOAT_LENGTH.toLong()
+            val bufferSize = (meshData.positions.size + meshData.textureCoords.size) * GraphConstants.FLOAT_LENGTH.toLong()
 
             return TransferBuffers(
                 VulkanBuffer(
@@ -108,7 +108,12 @@ class VulkanModel private constructor(
                             Utils.interleaveFloatArrays(
                                 3 to meshData.positions,
                                 2 to meshData.textureCoords
-                            )
+                            ).let {
+                                println()
+                                it.forEach (::print)
+                                println()
+                                it
+                            }
                         )
                     }
                 },

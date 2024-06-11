@@ -6,7 +6,7 @@
 
 package dev.bernasss12.vklearn.engine.graphics.vulkan.vertex
 
-import dev.bernasss12.vklearn.util.GraphConstants
+import dev.bernasss12.vklearn.util.GraphConstants.FLOAT_LENGTH
 import dev.bernasss12.vklearn.util.VulkanUtils.applyOn
 import dev.bernasss12.vklearn.util.VulkanUtils.applyOnFirst
 import org.lwjgl.vulkan.VK10.*
@@ -34,12 +34,12 @@ class VertexBufferStructure
                 binding(0)
                 location(1)
                 format(VK_FORMAT_R32G32_SFLOAT)
-                offset(POSITION_COMPONENTS * GraphConstants.FLOAT_LENGTH)
+                offset(POSITION_COMPONENTS * FLOAT_LENGTH)
             }
 
         vertexCreateInfoBindings = VkVertexInputBindingDescription.calloc(1).applyOnFirst {
             binding(0)
-            stride(POSITION_COMPONENTS * GraphConstants.FLOAT_LENGTH)
+            stride(POSITION_COMPONENTS * FLOAT_LENGTH + TEXT_COORD_COMPONENTS * FLOAT_LENGTH)
             inputRate(VK_VERTEX_INPUT_RATE_VERTEX)
         }
 

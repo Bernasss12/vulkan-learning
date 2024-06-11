@@ -28,9 +28,9 @@ class Main : IAppLogic {
         val meshDataList = listOf(
             MeshData(
                 floatArrayOf(
-                    -0.5f, -0.5f, 0.0f,
+                    -0.33f, -0.33f, 0.0f,
                     0.0f, 0.5f, 0.0f,
-                    0.5f, -0.5f, 0.0f
+                    0.33f, -0.33f, 0.0f
                 ),
                 intArrayOf(0, 1, 2)
             )

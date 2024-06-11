@@ -8,6 +8,7 @@ package dev.bernasss12.vklearn.engine.graphics.vulkan.swapchain
 
 import dev.bernasss12.vklearn.engine.Window
 import dev.bernasss12.vklearn.engine.graphics.vulkan.*
+import dev.bernasss12.vklearn.engine.graphics.vulkan.image.ImageView
 import dev.bernasss12.vklearn.util.VulkanUtils.moreThanZeroOrThrow
 import dev.bernasss12.vklearn.util.VulkanUtils.useMemoryStack
 import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
@@ -198,7 +199,7 @@ class SwapChain(
             ImageView(
                 device,
                 swapChainImages.get(index),
-                ImageView.ImageViewData(
+                ImageView.Data(
                     aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
                     format = imageFormat,
                 )

@@ -4,8 +4,9 @@
  * For the purpose of not bloating every single file in the project, refer to the version of the MIT license provided in the project in `LICENCE.md`
  */
 
-package dev.bernasss12.vklearn.engine.graphics.vulkan
+package dev.bernasss12.vklearn.engine.graphics.vulkan.image
 
+import dev.bernasss12.vklearn.engine.graphics.vulkan.Device
 import dev.bernasss12.vklearn.util.VulkanUtils.useMemoryStack
 import dev.bernasss12.vklearn.util.VulkanUtils.vkAssertSuccess
 import dev.bernasss12.vklearn.util.VulkanUtils.vkCreateLong
@@ -15,11 +16,11 @@ import org.lwjgl.vulkan.VkImageViewCreateInfo
 class ImageView(
     private val device: Device,
     vkImage: Long,
-    imageViewData: ImageViewData,
+    data: Data,
 ) : AutoCloseable {
 
-    private val aspectMask: Int = imageViewData.aspectMask
-    private val mipLevels: Int = imageViewData.mipLevels
+    private val aspectMask: Int = data.aspectMask
+    private val mipLevels: Int = data.mipLevels
     val vkImageView: Long
 
     init {
@@ -28,15 +29,15 @@ class ImageView(
             val imageViewCreateInfo = VkImageViewCreateInfo.calloc(stack).apply {
                 sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
                 image(vkImage)
-                viewType(imageViewData.viewType)
-                format(imageViewData.format)
+                viewType(data.viewType)
+                format(data.format)
                 subresourceRange { subresourceRange ->
                     subresourceRange.apply {
                         aspectMask(aspectMask)
                         baseMipLevel(0)
                         levelCount(mipLevels)
-                        baseArrayLayer(imageViewData.baseArrayLayer)
-                        layerCount(imageViewData.layerCount)
+                        baseArrayLayer(data.baseArrayLayer)
+                        layerCount(data.layerCount)
                     }
                 }
             }
@@ -59,7 +60,7 @@ class ImageView(
         vkDestroyImageView(device.vkDevice, vkImageView, null)
     }
 
-    data class ImageViewData(
+    data class Data(
         internal var aspectMask: Int,
         internal var format: Int,
         internal var baseArrayLayer: Int = 0,
